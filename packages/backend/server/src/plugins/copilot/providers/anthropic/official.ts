@@ -10,7 +10,11 @@ import { AnthropicProvider } from './anthropic';
 export type AnthropicOfficialConfig = {
   apiKey: string;
   baseURL?: string;
+  gatewayURL?: string;
+  useGateway?: boolean;
 };
+
+const DEFAULT_VERCEL_AI_GATEWAY_URL = 'https://ai-gateway.vercel.sh/v1';
 
 const ModelListSchema = z.object({
   data: z.array(z.object({ id: z.string() })),
@@ -62,20 +66,36 @@ export class AnthropicOfficialProvider extends AnthropicProvider<AnthropicOffici
   protected instance!: AnthropicSDKProvider;
 
   override configured(): boolean {
-    return !!this.config.apiKey;
+    return this.config.useGateway || !!this.config.apiKey;
   }
 
   override setup() {
     super.setup();
     this.instance = createAnthropic({
       apiKey: this.config.apiKey,
-      baseURL: this.config.baseURL,
+      baseURL: this.getBaseURL(),
     });
+  }
+
+  protected override isGatewayEnabled() {
+    return !!this.config.useGateway;
+  }
+
+  protected override getGatewayModel(model: string) {
+    return `anthropic/${model}`;
+  }
+
+  private getBaseURL() {
+    if (this.config.useGateway) {
+      return this.config.gatewayURL || DEFAULT_VERCEL_AI_GATEWAY_URL;
+    }
+    return this.config.baseURL;
   }
 
   override async refreshOnlineModels() {
     try {
-      const baseUrl = this.config.baseURL || 'https://api.anthropic.com/v1';
+      if (this.config.useGateway) return;
+      const baseUrl = this.getBaseURL() || 'https://api.anthropic.com/v1';
       if (this.config.apiKey && baseUrl && !this.onlineModelList.length) {
         const { data } = await fetch(`${baseUrl}/models`, {
           headers: {

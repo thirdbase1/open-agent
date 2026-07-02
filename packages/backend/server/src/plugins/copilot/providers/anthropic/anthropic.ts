@@ -32,6 +32,18 @@ export abstract class AnthropicProvider<T> extends CopilotProvider<T> {
     | AnthropicSDKProvider
     | GoogleVertexAnthropicProvider;
 
+  protected isGatewayEnabled() {
+    return false;
+  }
+
+  protected getGatewayModel(model: string) {
+    return model;
+  }
+
+  private getLanguageModel(model: string) {
+    return this.isGatewayEnabled() ? this.getGatewayModel(model) : this.instance(model);
+  }
+
   private handleError(e: any) {
     if (e instanceof UserFriendlyError) {
       return e;
@@ -81,7 +93,7 @@ export abstract class AnthropicProvider<T> extends CopilotProvider<T> {
         async () => {
           const [system, msgs] = await chatToGPTMessage(messages, true, true);
 
-          const modelInstance = this.instance(model.id);
+          const modelInstance = this.getLanguageModel(model.id);
           const { tools } = await this.getTools(options, model.id);
           return await generateText({
             model: modelInstance,
@@ -190,7 +202,7 @@ export abstract class AnthropicProvider<T> extends CopilotProvider<T> {
     const [system, msgs] = await chatToGPTMessage(messages, true, true);
     const { tools, toolOneTimeStream } = await this.getTools(options, model.id);
     const { stream, usage } = streamText({
-      model: this.instance(model.id),
+      model: this.getLanguageModel(model.id),
       system,
       messages: msgs,
       abortSignal: options.signal,

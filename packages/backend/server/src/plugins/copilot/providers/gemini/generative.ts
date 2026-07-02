@@ -10,7 +10,11 @@ import { GeminiProvider } from './gemini';
 export type GeminiGenerativeConfig = {
   apiKey: string;
   baseURL?: string;
+  gatewayURL?: string;
+  useGateway?: boolean;
 };
+
+const DEFAULT_VERCEL_AI_GATEWAY_URL = 'https://ai-gateway.vercel.sh/v1';
 
 const ModelListSchema = z.object({
   models: z.array(z.object({ name: z.string() })),
@@ -102,21 +106,37 @@ export class GeminiGenerativeProvider extends GeminiProvider<GeminiGenerativeCon
   protected instance!: GoogleGenerativeAIProvider;
 
   override configured(): boolean {
-    return !!this.config.apiKey;
+    return this.config.useGateway || !!this.config.apiKey;
   }
 
   protected override setup() {
     super.setup();
     this.instance = createGoogleGenerativeAI({
       apiKey: this.config.apiKey,
-      baseURL: this.config.baseURL,
+      baseURL: this.getBaseURL(),
     });
+  }
+
+  protected override isGatewayEnabled() {
+    return !!this.config.useGateway;
+  }
+
+  protected override getGatewayModel(model: string) {
+    return `google/${model}`;
+  }
+
+  private getBaseURL() {
+    if (this.config.useGateway) {
+      return this.config.gatewayURL || DEFAULT_VERCEL_AI_GATEWAY_URL;
+    }
+    return this.config.baseURL;
   }
 
   override async refreshOnlineModels() {
     try {
+      if (this.config.useGateway) return;
       const baseUrl =
-        this.config.baseURL ||
+        this.getBaseURL() ||
         'https://generativelanguage.googleapis.com/v1beta';
       if (this.config.apiKey && baseUrl && !this.onlineModelList.length) {
         const { models } = await fetch(

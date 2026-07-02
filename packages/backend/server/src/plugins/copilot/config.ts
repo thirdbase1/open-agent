@@ -82,6 +82,8 @@ defineModuleConfig('copilot', {
     default: {
       apiKey: '',
       baseURL: 'https://api.openai.com/v1',
+      gatewayURL: 'https://ai-gateway.vercel.sh/v1',
+      useGateway: true,
     },
     link: 'https://github.com/openai/openai-node',
   },
@@ -96,6 +98,8 @@ defineModuleConfig('copilot', {
     default: {
       apiKey: '',
       baseURL: 'https://generativelanguage.googleapis.com/v1beta',
+      gatewayURL: 'https://ai-gateway.vercel.sh/v1',
+      useGateway: true,
     },
   },
   'providers.geminiVertex': {
@@ -107,6 +111,8 @@ defineModuleConfig('copilot', {
     desc: 'The config for the perplexity provider.',
     default: {
       apiKey: '',
+      gatewayURL: 'https://ai-gateway.vercel.sh/v1',
+      useGateway: true,
     },
   },
   'providers.anthropic': {
@@ -114,6 +120,8 @@ defineModuleConfig('copilot', {
     default: {
       apiKey: '',
       baseURL: 'https://api.anthropic.com/v1',
+      gatewayURL: 'https://ai-gateway.vercel.sh/v1',
+      useGateway: true,
     },
   },
   'providers.anthropicVertex': {

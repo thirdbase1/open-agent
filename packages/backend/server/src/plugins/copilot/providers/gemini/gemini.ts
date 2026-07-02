@@ -49,6 +49,24 @@ export abstract class GeminiProvider<T> extends CopilotProvider<T> {
     | GoogleGenerativeAIProvider
     | GoogleVertexProvider;
 
+  protected isGatewayEnabled() {
+    return false;
+  }
+
+  protected getGatewayModel(model: string) {
+    return model;
+  }
+
+  private getLanguageModel(model: string) {
+    return this.isGatewayEnabled() ? this.getGatewayModel(model) : this.instance(model);
+  }
+
+  private getEmbeddingModel(model: string) {
+    return this.isGatewayEnabled()
+      ? this.getGatewayModel(model)
+      : this.instance.embeddingModel(model);
+  }
+
   private handleError(e: any) {
     if (e instanceof UserFriendlyError) {
       return e;
@@ -82,7 +100,7 @@ export abstract class GeminiProvider<T> extends CopilotProvider<T> {
 
       const [system, msgs] = await chatToGPTMessage(messages);
 
-      const modelInstance = this.instance(model.id);
+      const modelInstance = this.getLanguageModel(model.id);
 
       const { tools } = await this.getTools(options, model.id);
       const { text } = await generateText({
@@ -122,7 +140,7 @@ export abstract class GeminiProvider<T> extends CopilotProvider<T> {
         throw new CopilotPromptInvalid('Schema is required');
       }
 
-      const modelInstance = this.instance(model.id);
+      const modelInstance = this.getLanguageModel(model.id);
       const { object } = await generateObject({
         model: modelInstance,
         system,
@@ -252,7 +270,7 @@ export abstract class GeminiProvider<T> extends CopilotProvider<T> {
         .counter('generate_embedding_calls')
         .add(1, { model: model.id });
 
-      const modelInstance = this.instance.embeddingModel(model.id);
+      const modelInstance = this.getEmbeddingModel(model.id);
 
       const embeddings = await Promise.allSettled(
         messages.map(m =>
@@ -290,7 +308,7 @@ export abstract class GeminiProvider<T> extends CopilotProvider<T> {
     const [system, msgs] = await chatToGPTMessage(messages);
     const { tools, toolOneTimeStream } = await this.getTools(options, model.id);
     const { stream, usage } = streamText({
-      model: this.instance(model.id),
+      model: this.getLanguageModel(model.id),
       system,
       messages: msgs,
       abortSignal: options.signal,

@@ -49,11 +49,14 @@ import {
 } from './utils';
 
 export const DEFAULT_DIMENSIONS = 256;
+export const DEFAULT_VERCEL_AI_GATEWAY_URL = 'https://ai-gateway.vercel.sh/v1';
 
 export type OpenAIConfig = {
   apiKey: string;
   baseURL?: string;
+  gatewayURL?: string;
   oldApiStyle?: boolean;
+  useGateway?: boolean;
 };
 
 const ModelListSchema = z.object({
@@ -268,22 +271,58 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
   #instance!: VercelOpenAIProvider | VercelOpenAICompatibleProvider;
 
   override configured(): boolean {
-    return !!this.config.apiKey;
+    return this.config.useGateway || !!this.config.apiKey;
   }
 
   protected override setup() {
     super.setup();
+    const baseURL = this.getBaseURL();
     this.#instance =
-      this.config.oldApiStyle && this.config.baseURL
+      this.config.oldApiStyle && baseURL
         ? createOpenAICompatible({
             name: 'openai-compatible-old-style',
             apiKey: this.config.apiKey,
-            baseURL: this.config.baseURL,
+            baseURL,
           })
         : createOpenAI({
             apiKey: this.config.apiKey,
-            baseURL: this.config.baseURL,
+            baseURL,
           });
+  }
+
+  private getBaseURL() {
+    if (this.config.useGateway) {
+      return this.config.gatewayURL || DEFAULT_VERCEL_AI_GATEWAY_URL;
+    }
+    return this.config.baseURL;
+  }
+
+  private getGatewayModel(model: string) {
+    return `openai/${model}`;
+  }
+
+  private getLanguageModel(model: string) {
+    if (this.config.useGateway) return this.getGatewayModel(model);
+    return 'responses' in this.#instance
+      ? this.#instance.responses(model)
+      : this.#instance(model);
+  }
+
+  private getChatModel(model: string) {
+    if (this.config.useGateway) return this.getGatewayModel(model);
+    return 'chat' in this.#instance ? this.#instance.chat(model) : this.#instance(model);
+  }
+
+  private getImageModel(model: string) {
+    if (this.config.useGateway) return this.getGatewayModel(model);
+    return 'image' in this.#instance ? this.#instance.image(model) : undefined;
+  }
+
+  private getEmbeddingModel(model: string) {
+    if (this.config.useGateway) return this.getGatewayModel(model);
+    return 'embedding' in this.#instance
+      ? this.#instance.embedding(model)
+      : undefined;
   }
 
   private handleError(
@@ -316,7 +355,8 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
 
   override async refreshOnlineModels() {
     try {
-      const baseUrl = this.config.baseURL || 'https://api.openai.com/v1';
+      if (this.config.useGateway) return;
+      const baseUrl = this.getBaseURL() || 'https://api.openai.com/v1';
       if (this.config.apiKey && baseUrl && !this.onlineModelList.length) {
         const { data } = await fetch(`${baseUrl}/models`, {
           headers: {
@@ -364,10 +404,7 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
       const { text } = await TokenTracker.trackAICall(model.id, async () => {
         const [system, msgs] = await chatToGPTMessage(messages);
 
-        const modelInstance =
-          'responses' in this.#instance
-            ? this.#instance.responses(model.id)
-            : this.#instance(model.id);
+        const modelInstance = this.getLanguageModel(model.id);
 
         const { tools } = await this.getTools(options, model.id);
         return await generateText({
@@ -507,10 +544,7 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
           throw new CopilotPromptInvalid('Schema is required');
         }
 
-        const modelInstance =
-          'responses' in this.#instance
-            ? this.#instance.responses(model.id)
-            : this.#instance(model.id);
+        const modelInstance = this.getLanguageModel(model.id);
 
         return await generateObject({
           model: modelInstance,
@@ -543,10 +577,7 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
     await this.checkParams({ messages: [], cond: fullCond, options });
     const model = this.selectModel(fullCond);
     // get the log probability of "yes"/"no"
-    const instance =
-      'chat' in this.#instance
-        ? this.#instance.chat(model.id)
-        : this.#instance(model.id);
+    const instance = this.getChatModel(model.id);
 
     const scores = await Promise.all(
       chunkMessages.map(async (messages, index) => {
@@ -612,10 +643,7 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
     options: CopilotChatOptions = {}
   ) {
     const [system, msgs] = await chatToGPTMessage(messages);
-    const modelInstance =
-      'responses' in this.#instance
-        ? this.#instance.responses(model.id)
-        : this.#instance(model.id);
+    const modelInstance = this.getLanguageModel(model.id);
 
     const { tools } = await this.getTools(options, model.id);
     const { stream, usage } = streamText({
@@ -643,7 +671,7 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
     attachments: NonNullable<PromptMessage['attachments']>
   ): AsyncGenerator<string> {
     const form = new FormData();
-    form.set('model', model);
+    form.set('model', this.config.useGateway ? this.getGatewayModel(model) : model);
     form.set('prompt', prompt);
     form.set('output_format', 'webp');
 
@@ -666,7 +694,7 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
       );
     }
 
-    const url = `${this.config.baseURL || 'https://api.openai.com/v1'}/images/edits`;
+    const url = `${this.getBaseURL() || 'https://api.openai.com/v1'}/images/edits`;
     const res = await fetch(url, {
       method: 'POST',
       headers: { Authorization: `Bearer ${this.config.apiKey}` },
@@ -702,7 +730,7 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
     await this.checkParams({ messages, cond: fullCond, options });
     const model = this.selectModel(fullCond);
 
-    if (!('image' in this.#instance)) {
+    if (!this.config.useGateway && !('image' in this.#instance)) {
       throw new CopilotProviderNotSupported({
         provider: this.type,
         kind: 'image',
@@ -720,7 +748,7 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
       if (attachments && attachments.length > 0) {
         yield* this.generateImageWithAttachments(model.id, prompt, attachments);
       } else {
-        const modelInstance = this.#instance.image(model.id);
+        const modelInstance = this.getImageModel(model.id);
         const result = await generateImage({
           model: modelInstance,
           prompt,
@@ -759,7 +787,7 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
     await this.checkParams({ embeddings: messages, cond: fullCond, options });
     const model = this.selectModel(fullCond);
 
-    if (!('embedding' in this.#instance)) {
+    if (!this.config.useGateway && !('embedding' in this.#instance)) {
       throw new CopilotProviderNotSupported({
         provider: this.type,
         kind: 'embedding',
@@ -772,7 +800,7 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
         .add(1, { model: model.id });
 
       const startTime = Date.now();
-      const modelInstance = this.#instance.embedding(model.id);
+      const modelInstance = this.getEmbeddingModel(model.id);
 
       const { embeddings, usage } = await embedMany({
         model: modelInstance,

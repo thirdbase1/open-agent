@@ -20,7 +20,11 @@ import { chatToGPTMessage, CitationParser } from './utils';
 export type PerplexityConfig = {
   apiKey: string;
   endpoint?: string;
+  gatewayURL?: string;
+  useGateway?: boolean;
 };
+
+const DEFAULT_VERCEL_AI_GATEWAY_URL = 'https://ai-gateway.vercel.sh/v1';
 
 const PerplexityErrorSchema = z.union([
   z.object({
@@ -93,15 +97,26 @@ export class PerplexityProvider extends CopilotProvider<PerplexityConfig> {
   #instance!: VercelPerplexityProvider;
 
   override configured(): boolean {
-    return !!this.config.apiKey;
+    return this.config.useGateway || !!this.config.apiKey;
   }
 
   protected override setup() {
     super.setup();
     this.#instance = createPerplexity({
       apiKey: this.config.apiKey,
-      baseURL: this.config.endpoint,
+      baseURL: this.getBaseURL(),
     });
+  }
+
+  private getBaseURL() {
+    if (this.config.useGateway) {
+      return this.config.gatewayURL || DEFAULT_VERCEL_AI_GATEWAY_URL;
+    }
+    return this.config.endpoint;
+  }
+
+  private getLanguageModel(model: string) {
+    return this.config.useGateway ? `perplexity/${model}` : this.#instance(model);
   }
 
   async text(
@@ -118,7 +133,7 @@ export class PerplexityProvider extends CopilotProvider<PerplexityConfig> {
 
       const [system, msgs] = await chatToGPTMessage(messages, false);
 
-      const modelInstance = this.#instance(model.id);
+      const modelInstance = this.getLanguageModel(model.id);
 
       const { text, sources } = await generateText({
         model: modelInstance,
@@ -158,7 +173,7 @@ export class PerplexityProvider extends CopilotProvider<PerplexityConfig> {
 
       const [system, msgs] = await chatToGPTMessage(messages, false);
 
-      const modelInstance = this.#instance(model.id);
+      const modelInstance = this.getLanguageModel(model.id);
 
       const stream = streamText({
         model: modelInstance,
