@@ -9,7 +9,7 @@ import {
   generateObject,
   generateText,
   JSONParseError,
-  stepCountIs,
+  isStepCount,
   streamText,
 } from 'ai';
 
@@ -94,7 +94,7 @@ export abstract class GeminiProvider<T> extends CopilotProvider<T> {
           google: this.getGeminiOptions(model.id),
         },
         tools,
-        stopWhen: stepCountIs(this.MAX_STEPS),
+        stopWhen: isStepCount(this.MAX_STEPS),
       });
 
       if (!text) throw new Error('Failed to generate text');
@@ -173,12 +173,12 @@ export abstract class GeminiProvider<T> extends CopilotProvider<T> {
 
     try {
       metrics.ai.counter('chat_text_stream_calls').add(1, { model: model.id });
-      const { fullStream, usage } = await this.getFullStream(
+      const { stream, usage } = await this.getFullStream(
         model,
         messages,
         options
       );
-      for await (const chunk of fullStream) {
+      for await (const chunk of stream) {
         const result = parser.parse(chunk);
         yield result;
         if (options.signal?.aborted) {
@@ -213,12 +213,12 @@ export abstract class GeminiProvider<T> extends CopilotProvider<T> {
       metrics.ai
         .counter('chat_object_stream_calls')
         .add(1, { model: model.id });
-      const { fullStream, usage } = await this.getFullStream(
+      const { stream, usage } = await this.getFullStream(
         model,
         messages,
         options
       );
-      for await (const chunk of fullStream) {
+      for await (const chunk of stream) {
         const result = parser.parse(chunk);
         if (result) {
           yield result;
@@ -252,7 +252,7 @@ export abstract class GeminiProvider<T> extends CopilotProvider<T> {
         .counter('generate_embedding_calls')
         .add(1, { model: model.id });
 
-      const modelInstance = this.instance.textEmbeddingModel(model.id);
+      const modelInstance = this.instance.embeddingModel(model.id);
 
       const embeddings = await Promise.allSettled(
         messages.map(m =>
@@ -289,7 +289,7 @@ export abstract class GeminiProvider<T> extends CopilotProvider<T> {
   ) {
     const [system, msgs] = await chatToGPTMessage(messages);
     const { tools, toolOneTimeStream } = await this.getTools(options, model.id);
-    const { fullStream, usage } = streamText({
+    const { stream, usage } = streamText({
       model: this.instance(model.id),
       system,
       messages: msgs,
@@ -298,9 +298,9 @@ export abstract class GeminiProvider<T> extends CopilotProvider<T> {
         google: this.getGeminiOptions(model.id),
       },
       tools,
-      stopWhen: stepCountIs(this.MAX_STEPS),
+      stopWhen: isStepCount(this.MAX_STEPS),
     });
-    return { fullStream: mergeStreams(fullStream, toolOneTimeStream), usage };
+    return { stream: mergeStreams(stream, toolOneTimeStream), usage };
   }
 
   private getGeminiOptions(model: string) {

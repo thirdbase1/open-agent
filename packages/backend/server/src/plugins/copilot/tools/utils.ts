@@ -1,4 +1,4 @@
-import { Tool, ToolCallOptions } from '@ai-sdk/provider-utils';
+import { Tool, ToolExecutionOptions } from '@ai-sdk/provider-utils';
 import { Logger } from '@nestjs/common';
 import { JSONValue, tool } from 'ai';
 
@@ -133,7 +133,7 @@ export function createTool<I extends ToolArgs, O extends ToolArgs>(
 
   return tool<I, O>({
     ...toolDefinition,
-    execute: async (args: I, context: ToolCallOptions) => {
+    execute: async (args: I, context: ToolExecutionOptions) => {
       const startTime = Date.now();
       if (tracker) {
         tracker.pushTool(toolName);

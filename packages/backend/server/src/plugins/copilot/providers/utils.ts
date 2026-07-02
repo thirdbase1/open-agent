@@ -3,8 +3,8 @@ import { GoogleVertexAnthropicProviderSettings } from '@ai-sdk/google-vertex/ant
 import { Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
-  CoreAssistantMessage,
-  CoreUserMessage,
+  AssistantModelMessage,
+  UserModelMessage,
   DataContent,
   FilePart,
   ImagePart,
@@ -28,7 +28,7 @@ import {
   TokenUsageTotal,
 } from './types';
 
-type ChatMessage = CoreUserMessage | CoreAssistantMessage;
+type ChatMessage = UserModelMessage | AssistantModelMessage;
 
 const SIMPLE_IMAGE_URL_REGEX = /^(https?:\/\/|data:image\/)/;
 const FORMAT_INFER_MAP: Record<string, string> = {
@@ -410,7 +410,7 @@ export abstract class BaseStreamParser<T> {
     this.startTime = Date.now();
   }
 
-  async handleFinish(usage?: Promise<LanguageModelUsage>): Promise<void> {
+  async handleFinish(usage?: PromiseLike<LanguageModelUsage>): Promise<void> {
     if (this.isFinished) return;
     this.isFinished = true;
     const tracker = TokenTracker.getCurrentTracker();
@@ -427,7 +427,7 @@ export abstract class BaseStreamParser<T> {
           const tokenUsage = {
             inputTokens: resolvedUsage.inputTokens || 0,
             outputTokens: resolvedUsage.outputTokens || 0,
-            reasoningTokens: resolvedUsage.reasoningTokens || undefined,
+            reasoningTokens: resolvedUsage.outputTokenDetails?.reasoningTokens || undefined,
             totalTokens:
               (resolvedUsage.inputTokens || 0) +
               (resolvedUsage.outputTokens || 0),

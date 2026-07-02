@@ -11,10 +11,10 @@ import {
 import {
   AISDKError,
   embedMany,
-  experimental_generateImage as generateImage,
+  generateImage,
   generateObject,
   generateText,
-  stepCountIs,
+  isStepCount,
   streamText,
   Tool,
 } from 'ai';
@@ -380,7 +380,7 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
             openai: this.getOpenAIOptions(options, model.id),
           },
           tools,
-          stopWhen: stepCountIs(this.MAX_STEPS),
+          stopWhen: isStepCount(this.MAX_STEPS),
           abortSignal: options.signal,
         });
       });
@@ -407,13 +407,13 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
 
     try {
       metrics.ai.counter('chat_text_stream_calls').add(1, { model: model.id });
-      const { fullStream, usage } = await this.getFullStream(
+      const { stream, usage } = await this.getFullStream(
         model,
         messages,
         options
       );
       const citationParser = new CitationParser();
-      for await (const chunk of fullStream) {
+      for await (const chunk of stream) {
         switch (chunk.type) {
           case 'text-delta': {
             let result = textParser.parse(chunk);
@@ -434,7 +434,7 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
           }
         }
         if (options.signal?.aborted) {
-          await fullStream.cancel();
+          await stream.cancel();
           break;
         }
       }
@@ -461,13 +461,13 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
       metrics.ai
         .counter('chat_object_stream_calls')
         .add(1, { model: model.id });
-      const { fullStream, usage } = await this.getFullStream(
+      const { stream, usage } = await this.getFullStream(
         model,
         messages,
         options
       );
 
-      for await (const chunk of fullStream) {
+      for await (const chunk of stream) {
         const result = parser.parse(chunk);
         if (result) {
           yield result;
@@ -475,7 +475,7 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
 
         if (options.signal?.aborted) {
           parser.handleError();
-          await fullStream.cancel();
+          await stream.cancel();
           break;
         }
       }
@@ -618,7 +618,7 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
         : this.#instance(model.id);
 
     const { tools } = await this.getTools(options, model.id);
-    const { fullStream, usage } = streamText({
+    const { stream, usage } = streamText({
       model: modelInstance,
       system,
       messages: msgs,
@@ -630,10 +630,10 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
         openai: this.getOpenAIOptions(options, model.id),
       },
       tools,
-      stopWhen: stepCountIs(this.MAX_STEPS),
+      stopWhen: isStepCount(this.MAX_STEPS),
       abortSignal: options.signal,
     });
-    return { fullStream, usage };
+    return { stream, usage };
   }
 
   // ====== text to image ======
@@ -818,6 +818,6 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
 
   private isReasoningModel(model: string) {
     // o series reasoning models
-    return model.startsWith('o') && model.startsWith('gpt-5');
+    return model.startsWith('o') || model.startsWith('gpt-5');
   }
 }

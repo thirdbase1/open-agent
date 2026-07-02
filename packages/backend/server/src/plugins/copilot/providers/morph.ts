@@ -141,7 +141,7 @@ export class MorphProvider extends CopilotProvider<MorphConfig> {
 
       const modelInstance = this.#instance(model.id);
 
-      const { fullStream } = streamText({
+      const { stream } = streamText({
         model: modelInstance,
         system,
         messages: msgs,
@@ -149,7 +149,7 @@ export class MorphProvider extends CopilotProvider<MorphConfig> {
       });
 
       const textParser = new TextStreamParser(model.id);
-      for await (const chunk of fullStream) {
+      for await (const chunk of stream) {
         switch (chunk.type) {
           case 'text-delta': {
             let result = textParser.parse(chunk);
@@ -162,7 +162,7 @@ export class MorphProvider extends CopilotProvider<MorphConfig> {
           }
         }
         if (options.signal?.aborted) {
-          await fullStream.cancel();
+          await stream.cancel();
           break;
         }
       }

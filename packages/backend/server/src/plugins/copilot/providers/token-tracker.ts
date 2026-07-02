@@ -347,10 +347,10 @@ export class TokenTrackingManager {
 
     if (usage) {
       return {
-        inputTokens: usage.promptTokens || 0,
-        outputTokens: usage.completionTokens || 0,
-        reasoningTokens: usage.reasoningTokens || undefined,
-        totalTokens: (usage.promptTokens || 0) + (usage.completionTokens || 0),
+        inputTokens: usage.inputTokens || usage.promptTokens || 0,
+        outputTokens: usage.outputTokens || usage.completionTokens || 0,
+        reasoningTokens: usage.outputTokenDetails?.reasoningTokens || usage.reasoningTokens || undefined,
+        totalTokens: usage.totalTokens || (usage.inputTokens || usage.promptTokens || 0) + (usage.outputTokens || usage.completionTokens || 0),
         totalWithReasoning: usage.totalTokens || undefined,
       };
     } else {

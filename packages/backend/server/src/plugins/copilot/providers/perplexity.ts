@@ -170,7 +170,7 @@ export class PerplexityProvider extends CopilotProvider<PerplexityConfig> {
       });
 
       const parser = new CitationParser();
-      for await (const chunk of stream.fullStream) {
+      for await (const chunk of stream.stream) {
         switch (chunk.type) {
           case 'source': {
             if (chunk.sourceType === 'url') {
