@@ -20,7 +20,6 @@ import { chatToGPTMessage, CitationParser } from './utils';
 export type PerplexityConfig = {
   apiKey: string;
   endpoint?: string;
-  gatewayURL?: string;
   useGateway?: boolean;
 };
 
@@ -110,7 +109,7 @@ export class PerplexityProvider extends CopilotProvider<PerplexityConfig> {
 
   private getBaseURL() {
     if (this.config.useGateway) {
-      return this.config.gatewayURL || DEFAULT_VERCEL_AI_GATEWAY_URL;
+      return DEFAULT_VERCEL_AI_GATEWAY_URL;
     }
     return this.config.endpoint;
   }

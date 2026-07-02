@@ -54,7 +54,6 @@ export const DEFAULT_VERCEL_AI_GATEWAY_URL = 'https://ai-gateway.vercel.sh/v1';
 export type OpenAIConfig = {
   apiKey: string;
   baseURL?: string;
-  gatewayURL?: string;
   oldApiStyle?: boolean;
   useGateway?: boolean;
 };
@@ -292,11 +291,16 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
 
   private getBaseURL() {
     if (this.config.useGateway) {
-      return this.config.gatewayURL || DEFAULT_VERCEL_AI_GATEWAY_URL;
+      return DEFAULT_VERCEL_AI_GATEWAY_URL;
     }
     return this.config.baseURL;
   }
 
+  /**
+   * Vercel AI Gateway is used by passing provider-prefixed model strings
+   * directly to AI SDK 7. Authentication is automatic from AI_GATEWAY_API_KEY
+   * or Vercel OIDC tokens in Vercel deployments.
+   */
   private getGatewayModel(model: string) {
     return `openai/${model}`;
   }
@@ -697,7 +701,9 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
     const url = `${this.getBaseURL() || 'https://api.openai.com/v1'}/images/edits`;
     const res = await fetch(url, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${this.config.apiKey}` },
+      headers: {
+        Authorization: `Bearer ${process.env.AI_GATEWAY_API_KEY || this.config.apiKey}`,
+      },
       body: form,
     });
 

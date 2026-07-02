@@ -10,7 +10,6 @@ import { GeminiProvider } from './gemini';
 export type GeminiGenerativeConfig = {
   apiKey: string;
   baseURL?: string;
-  gatewayURL?: string;
   useGateway?: boolean;
 };
 
@@ -121,13 +120,18 @@ export class GeminiGenerativeProvider extends GeminiProvider<GeminiGenerativeCon
     return !!this.config.useGateway;
   }
 
+  /**
+   * Vercel AI Gateway is used by passing provider-prefixed model strings
+   * directly to AI SDK 7. Authentication is automatic from AI_GATEWAY_API_KEY
+   * or Vercel OIDC tokens in Vercel deployments.
+   */
   protected override getGatewayModel(model: string) {
     return `google/${model}`;
   }
 
   private getBaseURL() {
     if (this.config.useGateway) {
-      return this.config.gatewayURL || DEFAULT_VERCEL_AI_GATEWAY_URL;
+      return DEFAULT_VERCEL_AI_GATEWAY_URL;
     }
     return this.config.baseURL;
   }

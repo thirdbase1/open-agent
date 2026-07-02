@@ -10,7 +10,6 @@ import { AnthropicProvider } from './anthropic';
 export type AnthropicOfficialConfig = {
   apiKey: string;
   baseURL?: string;
-  gatewayURL?: string;
   useGateway?: boolean;
 };
 
@@ -81,13 +80,18 @@ export class AnthropicOfficialProvider extends AnthropicProvider<AnthropicOffici
     return !!this.config.useGateway;
   }
 
+  /**
+   * Vercel AI Gateway is used by passing provider-prefixed model strings
+   * directly to AI SDK 7. Authentication is automatic from AI_GATEWAY_API_KEY
+   * or Vercel OIDC tokens in Vercel deployments.
+   */
   protected override getGatewayModel(model: string) {
     return `anthropic/${model}`;
   }
 
   private getBaseURL() {
     if (this.config.useGateway) {
-      return this.config.gatewayURL || DEFAULT_VERCEL_AI_GATEWAY_URL;
+      return DEFAULT_VERCEL_AI_GATEWAY_URL;
     }
     return this.config.baseURL;
   }
