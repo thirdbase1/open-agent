@@ -1,7 +1,5 @@
-import {
-  config as falConfig,
-  stream as falStream,
-} from '@fal-ai/serverless-client';
+import { createFal, type FalImageModel } from '@ai-sdk/fal';
+import { generateImage } from 'ai';
 import { Injectable } from '@nestjs/common';
 import { z, ZodType } from 'zod';
 
@@ -52,11 +50,6 @@ const FalResponseSchema = z.object({
 
 type FalResponse = z.infer<typeof FalResponseSchema>;
 
-const FalStreamOutputSchema = z.object({
-  type: z.literal('output'),
-  output: FalResponseSchema,
-});
-
 type FalPrompt = {
   model_name?: string;
   image_url?: string;
@@ -75,7 +68,7 @@ export class FalProvider extends CopilotProvider<FalConfig> {
 
   override readonly models = [
     {
-      id: 'flux-1/schnell',
+      id: 'fal-ai/flux/schnell',
       capabilities: [
         {
           input: [ModelInputType.Text],
@@ -86,7 +79,7 @@ export class FalProvider extends CopilotProvider<FalConfig> {
     },
     // image to image models
     {
-      id: 'lcm-sd15-i2i',
+      id: 'fal-ai/lcm-sd15-i2i',
       capabilities: [
         {
           input: [ModelInputType.Image],
@@ -96,7 +89,7 @@ export class FalProvider extends CopilotProvider<FalConfig> {
       ],
     },
     {
-      id: 'clarity-upscaler',
+      id: 'fal-ai/clarity-upscaler',
       capabilities: [
         {
           input: [ModelInputType.Image],
@@ -105,7 +98,7 @@ export class FalProvider extends CopilotProvider<FalConfig> {
       ],
     },
     {
-      id: 'face-to-sticker',
+      id: 'fal-ai/face-to-sticker',
       capabilities: [
         {
           input: [ModelInputType.Image],
@@ -114,7 +107,7 @@ export class FalProvider extends CopilotProvider<FalConfig> {
       ],
     },
     {
-      id: 'imageutils/rembg',
+      id: 'fal-ai/imageutils/rembg',
       capabilities: [
         {
           input: [ModelInputType.Image],
@@ -123,16 +116,7 @@ export class FalProvider extends CopilotProvider<FalConfig> {
       ],
     },
     {
-      id: 'workflowutils/teed',
-      capabilities: [
-        {
-          input: [ModelInputType.Image],
-          output: [ModelOutputType.Image],
-        },
-      ],
-    },
-    {
-      id: 'lora/image-to-image',
+      id: 'fal-ai/lora/image-to-image',
       capabilities: [
         {
           input: [ModelInputType.Image],
@@ -142,18 +126,19 @@ export class FalProvider extends CopilotProvider<FalConfig> {
     },
   ];
 
+  #instance!: ReturnType<typeof createFal>;
+
   override configured(): boolean {
     return !!this.config.apiKey;
   }
 
   protected override setup() {
     super.setup();
-    falConfig({ credentials: this.config.apiKey });
+    this.#instance = createFal({ apiKey: this.config.apiKey });
   }
 
   private extractArray<T>(value: T | T[] | undefined): T[] {
-    if (Array.isArray(value)) return value;
-    return value ? [value] : [];
+    return Array.isArray(value) ? value : value ? [value] : [];
   }
 
   private extractPrompt(
@@ -162,7 +147,6 @@ export class FalProvider extends CopilotProvider<FalConfig> {
   ): FalPrompt {
     if (!message) throw new CopilotPromptInvalid('Prompt is empty');
     const { content, attachments, params } = message;
-    // prompt attachments require at least one
     if (!content && (!Array.isArray(attachments) || !attachments.length)) {
       throw new CopilotPromptInvalid('Prompt or Attachments is empty');
     }
@@ -175,10 +159,6 @@ export class FalProvider extends CopilotProvider<FalConfig> {
     ].filter(
       (v): v is { path: string; scale?: number } =>
         !!v && typeof v === 'object' && typeof v.path === 'string'
-    );
-    const controlnets = this.extractArray(params?.controlnets).filter(
-      (v): v is { image_url: string } =>
-        !!v && typeof v === 'object' && typeof v.image_url === 'string'
     );
     return {
       model_name: options.modelName || undefined,
@@ -193,7 +173,6 @@ export class FalProvider extends CopilotProvider<FalConfig> {
         .find(v => !!v),
       prompt: content.trim(),
       loras: lora.length ? lora : undefined,
-      controlnets: controlnets.length ? controlnets : undefined,
     };
   }
 
@@ -225,16 +204,13 @@ export class FalProvider extends CopilotProvider<FalConfig> {
 
   private handleError(e: any) {
     if (e instanceof UserFriendlyError) {
-      // pass through user friendly errors
       return e;
-    } else {
-      const error = new CopilotProviderSideError({
-        provider: this.type,
-        kind: 'unexpected_response',
-        message: e?.message || 'Unexpected fal response',
-      });
-      return error;
     }
+    return new CopilotProviderSideError({
+      provider: this.type,
+      kind: 'unexpected_response',
+      message: e?.message || 'Unexpected fal response',
+    });
   }
 
   private parseSchema<R>(schema: ZodType<R>, data: unknown): R {
@@ -257,11 +233,9 @@ export class FalProvider extends CopilotProvider<FalConfig> {
 
     try {
       metrics.ai.counter('chat_text_calls').add(1, { model: model.id });
-
-      // by default, image prompt assumes there is only one message
       const prompt = this.extractPrompt(messages[messages.length - 1]);
 
-      const response = await fetch(`https://fal.run/fal-ai/${model.id}`, {
+      const response = await fetch(`https://fal.run/${model.id}`, {
         method: 'POST',
         headers: {
           Authorization: `key ${this.config.apiKey}`,
@@ -292,11 +266,9 @@ export class FalProvider extends CopilotProvider<FalConfig> {
     options: CopilotChatOptions | CopilotImageOptions = {}
   ): AsyncIterable<string> {
     const model = this.selectModel(cond);
-
     try {
       metrics.ai.counter('chat_text_stream_calls').add(1, { model: model.id });
       const result = await this.text(cond, messages, options);
-
       yield result;
     } catch (e) {
       metrics.ai.counter('chat_text_stream_errors').add(1, { model: model.id });
@@ -319,59 +291,41 @@ export class FalProvider extends CopilotProvider<FalConfig> {
         .counter('generate_images_stream_calls')
         .add(1, { model: model.id });
 
-      // by default, image prompt assumes there is only one message
       const prompt = this.extractPrompt(
         messages[messages.length - 1],
         options as CopilotImageOptions
       );
 
-      let data: FalResponse;
-      if (model.id.startsWith('workflows/')) {
-        const stream = await falStream(model.id, { input: prompt });
-        data = this.parseSchema(
-          FalStreamOutputSchema,
-          await stream.done()
-        ).output;
-      } else {
-        const response = await fetch(`https://fal.run/fal-ai/${model.id}`, {
-          method: 'POST',
-          headers: {
-            Authorization: `key ${this.config.apiKey}`,
-            'Content-Type': 'application/json',
+      // Use @ai-sdk/fal with generateImage for standard models
+      const modelInstance = this.#instance.image(model.id);
+      const result = await generateImage({
+        model: modelInstance,
+        prompt: prompt.prompt || '',
+        size: options.width && options.height
+          ? { width: options.width, height: options.height }
+          : undefined,
+        providerOptions: {
+          fal: {
+            ...(prompt.image_url ? { imageUrl: prompt.image_url } : {}),
+            ...(prompt.loras ? { loras: prompt.loras } : {}),
+            enableSafetyChecker: false,
           },
-          body: JSON.stringify({
-            ...prompt,
-            sync_mode: true,
-            seed: (options as CopilotImageOptions)?.seed || 42,
-            enable_safety_checks: false,
-          }),
-          signal: options.signal,
-        });
-        data = this.parseSchema(FalResponseSchema, await response.json());
-      }
+        },
+        abortSignal: options.signal,
+      });
 
-      if (!data.images?.length && !data.image?.url) {
-        throw this.extractFalError(data, 'Failed to generate images');
-      }
-
-      if (data.image?.url) {
-        yield data.image.url;
-        return;
-      }
-
-      const imageUrls =
-        data.images
-          ?.filter((image): image is NonNullable<FalImage> => !!image)
-          .map(image => image.url) || [];
-
-      for (const url of imageUrls) {
-        yield url;
+      for (const image of result.images) {
+        if (image.base64) {
+          yield `data:image/png;base64,${image.base64}`;
+        } else if (image.uint8Array) {
+          yield `data:image/png;base64,${Buffer.from(image.uint8Array).toString('base64')}`;
+        }
         if (options.signal?.aborted) {
           break;
         }
       }
       return;
-    } catch (e) {
+    } catch (e: any) {
       metrics.ai
         .counter('generate_images_stream_errors')
         .add(1, { model: model.id });
