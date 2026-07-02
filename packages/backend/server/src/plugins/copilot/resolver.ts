@@ -38,6 +38,7 @@ import type { ListSessionOptions, UpdateChatSession } from '../../models';
 import { CopilotCronJobs } from './cron';
 import { PromptService } from './prompt';
 import { PromptMessage, StreamObject } from './providers/types';
+import { CopilotProviderFactory } from './providers/factory';
 import { ChatSessionService } from './session';
 import { CopilotStorage } from './storage';
 import { type ChatHistory, type ChatMessage, SubmittedMessage } from './types';
@@ -348,14 +349,44 @@ export class CopilotType {
   userId!: string;
 }
 
+
+@ObjectType('CopilotModelInfo')
+class CopilotModelInfoType {
+  @Field(() => String)
+  provider!: string;
+
+  @Field(() => String)
+  modelId!: string;
+
+  @Field(() => [String])
+  inputTypes!: string[];
+
+  @Field(() => [String])
+  outputTypes!: string[];
+}
+
 @Throttle()
 @Resolver(() => CopilotType)
 export class CopilotResolver {
   constructor(
     private readonly mutex: RequestMutex,
     private readonly chatSession: ChatSessionService,
-    private readonly storage: CopilotStorage
+    private readonly storage: CopilotStorage,
+    private readonly providerFactory: CopilotProviderFactory
   ) {}
+
+  @Query(() => [CopilotModelInfoType], {
+    description: 'List all available models from configured providers',
+  })
+  @CallMetric('ai', 'list_models')
+  async listCopilotModels(): Promise<CopilotModelInfoType[]> {
+    return this.providerFactory.listAllModels().map(m => ({
+      provider: m.provider,
+      modelId: m.modelId,
+      inputTypes: m.capabilities.flatMap(c => c.input),
+      outputTypes: m.capabilities.flatMap(c => c.output),
+    }));
+  }
 
   @ResolveField(() => CopilotQuotaType, {
     name: 'quota',

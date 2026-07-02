@@ -68,6 +68,24 @@ export class CopilotProviderFactory {
     this.server.enableFeature(ServerFeature.Copilot);
   }
 
+
+  listAllModels(): Array<{ provider: CopilotProviderType; modelId: string; capabilities: Array<{ input: string[]; output: string[] }> }> {
+    const models: Array<{ provider: CopilotProviderType; modelId: string; capabilities: Array<{ input: string[]; output: string[] }> }> = [];
+    for (const [type, provider] of this.#providers.entries()) {
+      for (const model of provider.models) {
+        models.push({
+          provider: type,
+          modelId: model.id,
+          capabilities: model.capabilities.map(c => ({
+            input: c.input,
+            output: c.output,
+          })),
+        });
+      }
+    }
+    return models;
+  }
+
   unregister(provider: CopilotProvider) {
     this.#providers.delete(provider.type);
     this.logger.log(`Copilot provider [${provider.type}] unregistered.`);

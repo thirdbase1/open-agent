@@ -9,26 +9,89 @@ import {
   WebIcon,
 } from '@blocksuite/icons/rc';
 import type { Dispatch, SetStateAction } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ChatGPTIcon } from '@/icons/chatgpt';
 import { ClaudeIcon } from '@/icons/claude';
 import { GeminiIcon } from '@/icons/gemini';
 
-export const tempModels = [
-  {
-    label: 'Claude Sonnet 4',
-    value: 'claude-sonnet-4@20250514',
-    icon: <ClaudeIcon />,
-  },
+// Provider icon mapping
+const providerIcons: Record<string, React.ReactNode> = {
+  openai: <ChatGPTIcon />,
+  anthropic: <ClaudeIcon />,
+  anthropicVertex: <ClaudeIcon />,
+  gemini: <GeminiIcon />,
+  geminiVertex: <GeminiIcon />,
+  fal: <AiIcon />,
+  morph: <CodeIcon />,
+  perplexity: <AiIcon />,
+  oracle: <AiIcon />,
+};
+
+// Model display name mapping
+function getModelLabel(modelId: string): string {
+  return modelId
+    .replace('fal-ai/', '')
+    .replace('anthropic/', '')
+    .replace('google/', '')
+    .split('/')
+    .pop()
+    ?.split('-')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ') || modelId;
+}
+
+interface DynamicModel {
+  provider: string;
+  modelId: string;
+  inputTypes: string[];
+  outputTypes: string[];
+}
+
+// Fallback static models if API fails
+const fallbackModels = [
+  { label: 'Claude Sonnet 4', value: 'claude-sonnet-4@20250514', icon: <ClaudeIcon /> },
   { label: 'Gemini 2.5 Pro', value: 'gemini-2.5-pro', icon: <GeminiIcon /> },
   { label: 'GPT-5', value: 'gpt-5', icon: <ChatGPTIcon /> },
-  {
-    label: 'Gemini 2.5 Flash',
-    value: 'gemini-2.5-flash',
-    icon: <GeminiIcon />,
-  },
+  { label: 'Gemini 2.5 Flash', value: 'gemini-2.5-flash', icon: <GeminiIcon /> },
   { label: 'o4 Mini', value: 'o4-mini', icon: <ChatGPTIcon /> },
 ];
+
+function useModels() {
+  const [models, setModels] = useState(fallbackModels);
+
+  useEffect(() => {
+    fetch('/api/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: `{ listCopilotModels { provider modelId outputTypes } }`,
+      }),
+    })
+      .then(r => r.json())
+      .then(({ data }) => {
+        if (data?.listCopilotModels?.length) {
+          // Filter to text-generating models only
+          const textModels = data.listCopilotModels.filter(
+            (m: DynamicModel) =>
+              m.outputTypes.some(t => t.includes('Text') || t.includes('Object') || t.includes('Structured'))
+          );
+          if (textModels.length > 0) {
+            setModels(
+              textModels.map((m: DynamicModel) => ({
+                label: getModelLabel(m.modelId),
+                value: m.modelId,
+                icon: providerIcons[m.provider] || <AiIcon />,
+              }))
+            );
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  return models;
+}
 
 export const configurableTools = [
   {
@@ -51,14 +114,6 @@ export const configurableTools = [
     icon: <WebIcon />,
     value: 'webSearch',
   },
-  // {
-  //   label: 'Web Crawl',
-  //   icon: <WebIcon />,
-  //   value: 'web_crawl_exa',
-  // },
-  // {
-  //   label: 'Todo',
-  // },
   {
     label: 'Python',
     icon: <CodeIcon />,
@@ -98,6 +153,8 @@ export const ChatConfigMenu = ({
   tools: string[];
   setTools: Dispatch<SetStateAction<string[]>>;
 }) => {
+  const tempModels = useModels();
+
   return (
     <Menu
       contentOptions={{
