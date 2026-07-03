@@ -7,7 +7,16 @@ generator client {
 
 datasource db {
   provider   = "postgresql"
+  // Pooled connection (e.g. Supabase Supavisor / PgBouncer, port 6543, with
+  // ?pgbouncer=true) — used by the running app at runtime.
   url        = env("DATABASE_URL")
+  // Direct, non-pooled connection (e.g. Supabase port 5432) — used only by
+  // the Prisma CLI for migrate/introspect, which need a session-level
+  // connection a transaction pooler can't provide. Must be set whenever
+  // `prisma migrate`/`db push` run (self-hosted/non-pooled Postgres, e.g.
+  // local docker-compose, can just point DIRECT_URL at the same value as
+  // DATABASE_URL — there's no separate pooler to route around).
+  directUrl  = env("DIRECT_URL")
   extensions = [pgvector(map: "vector")]
 }
 

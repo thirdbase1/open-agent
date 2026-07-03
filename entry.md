@@ -145,7 +145,79 @@ What changed:
   `REDIS_URL`, or set the discrete `REDIS_SERVER_HOST/PORT/USERNAME/PASSWORD` + `REDIS_ENABLE_TLS=true` from
   the values Upstash's dashboard shows you.
 
-## 6. Still open / needs your input
+## 6. Complete env var reference (audited from the actual config code, not guessed)
+
+Every var below was found by grepping the app's own config-declaration framework (`defineModuleConfig`)
+and `process.env` usages — this is the real, complete list, not a generic checklist.
+
+*Core / infra (all read via the app's typed config layer):*
+1. DATABASE_URL — Postgres connection string (Prisma). Pooled connection if using Supabase/serverless Postgres.
+2. DIRECT_URL — direct, non-pooled Postgres connection, added in this pass for Prisma CLI migrate/introspect (see §7).
+3. REDIS_SERVER_HOST, REDIS_SERVER_PORT, REDIS_SERVER_USERNAME, REDIS_SERVER_PASSWORD, REDIS_ENABLE_TLS —
+   discrete Redis config. Or set REDIS_URL / KV_URL / UPSTASH_REDIS_URL instead (auto-parsed, see §5).
+4. OPEN_AGENT_PRIVATE_KEY — **the one genuine auth-related secret in this codebase.** Used by the crypto
+   module to sign/verify tokens (email verification, password reset, etc.). Must be set explicitly and kept
+   stable in production — if it changes, all previously-issued signed tokens/sessions become invalid.
+5. OPEN_AGENT_SERVER_EXTERNAL_URL, OPEN_AGENT_SERVER_HTTPS, OPEN_AGENT_SERVER_HOST, OPEN_AGENT_SERVER_SUB_PATH
+   — how the server describes its own public URL (for building links in emails etc). OPEN_AGENT_SERVER_PORT
+   is set automatically by Vercel's $PORT (see Dockerfile.vercel).
+6. NODE_ENV, OPEN_AGENT_ENV (namespace: dev/beta/production), SERVER_FLAVOR (allinone/graphql/script),
+   DEPLOYMENT_TYPE, DEPLOYMENT_PLATFORM — deployment/runtime flavor flags.
+
+*Mail (needed for signup verification, password reset, invites):*
+7. MAILER_HOST, MAILER_PORT, MAILER_USER, MAILER_PASSWORD, MAILER_SENDER, MAILER_IGNORE_TLS — plain SMTP.
+
+*AI / Copilot:*
+8. AI_GATEWAY_API_KEY — optional on Vercel, falls back automatically to VERCEL_OIDC_TOKEN (already wired).
+
+*What's deliberately NOT an env var, so I'm not going to invent one:*
+- OAuth providers (Google/GitHub/Apple/OIDC client id+secret) and AI provider API keys (OpenAI, Anthropic,
+  Fal, Morph, Perplexity individual keys) are **runtime, database-backed config** in this app (AFFiNE's
+  admin-configurable runtime settings) — set after deploy via the admin API/GraphQL, not via Vercel env vars.
+  If you want these to be settable as plain env vars instead (simpler for a Vercel-only deploy, no admin UI
+  step), that's a real code change to how the runtime config module reads its defaults — say the word and
+  I'll wire it, rather than silently assuming.
+- Object storage (avatar/blob uploads) defaults to **local filesystem** (`~/.open-agent/storage`), also
+  runtime-config-driven, not env-var-driven. This will not work on Vercel — Vercel's containers don't have
+  a persistent writable disk across deploys/restarts. Before going live you must set the avatar/blob storage
+  provider to `s3` or `r2` via the runtime config, pointing at real S3/R2 credentials. I haven't done this
+  for you since it needs your actual bucket/credentials — flagging it now so it doesn't bite you on first
+  upload.
+
+## 7. Database → Supabase Postgres — done, verified against Prisma's own docs
+
+Prisma is Postgres already, so this is a real drop-in (unlike auth, see below). Confirmed via Prisma's
+official Supabase guide:
+- Supabase gives you three connection strings: direct (port 5432), Transaction Pooler / Supavisor (port
+  6543), Session Pooler (port 5432 pooled). Serverless platforms (Vercel) should use the **Transaction
+  Pooler** for the running app, because a normal direct connection exhausts fast under serverless scaling.
+- Prisma's official recommendation: `DATABASE_URL` = the pooled connection string with `?pgbouncer=true`
+  appended, `DIRECT_URL` = the direct (5432) connection string, used only by Prisma CLI migrate/introspect.
+- Implemented: added `directUrl = env("DIRECT_URL")` to `schema.prisma`'s datasource block (Prisma-native
+  feature, no code beyond the schema needed — `PrismaFactory` already just does `new PrismaClient(...)`
+  with no explicit datasourceUrl override, so it was already purely driven by the schema's `env()` bindings).
+  Also added `DIRECT_URL` to `.docker/docker-compose.yml` (same value as `DATABASE_URL` there, since local
+  Postgres has no pooler to route around).
+- In Vercel: after installing the Supabase Marketplace integration, check exactly what env vars it injects
+  (I could not fully confirm the exact names for the current integration — Vercel's older Postgres/Neon
+  convention used `POSTGRES_PRISMA_URL` / `POSTGRES_URL_NON_POOLING`, but confirm what you actually see).
+  Map whichever one uses port 6543 (pooled) to `DATABASE_URL`, and whichever uses port 5432 (direct) to
+  `DIRECT_URL`.
+
+## 8. Auth → Supabase — NOT done, and here's why I didn't just wire it fast
+
+This app has its own complete, working auth system: NestJS guards, its own session store (SessionRedis),
+its own `User` Prisma model with foreign keys used throughout the schema, its own OAuth provider plugin
+(`plugins/oauth`), its own email verification/password reset flows signed with `OPEN_AGENT_PRIVATE_KEY`.
+Supabase Auth is a separate, incompatible system (its own JWT format, its own user table, its own session
+model). Swapping to it isn't an env var change like Redis or Postgres was — it means ripping out and
+rewriting the guard layer, every resolver/controller that checks `req.user`, the session lifecycle, and
+the User model's relations across the whole schema. That's a real multi-file architectural migration with
+high regression risk (breaking login for everyone) if rushed. I didn't want to hand you a fast-but-broken
+auth swap and call it done. If you still want this, I'll scope it properly as its own focused pass — happy
+to start whenever you say go, just didn't want to bundle a risky one under "fast."
+
+## 9. Still open / needs your input
 
 - Object storage (`base/storage/providers/s3.ts` and `r2.ts`) is currently S3-API-compatible (works with
   Cloudflare R2 today). Vercel's own storage product, Vercel Blob, is **not** S3-API-compatible — swapping

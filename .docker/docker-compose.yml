@@ -30,6 +30,7 @@ services:
     environment:
       - SERVER_FLAVOR=script
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/open_agent
+      - DIRECT_URL=postgres://postgres:postgres@postgres:5432/open_agent
       - REDIS_SERVER_HOST=redis
     volumes:
       - ./config.json:/app/config.json
@@ -46,6 +47,7 @@ services:
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/open_agent
+      - DIRECT_URL=postgres://postgres:postgres@postgres:5432/open_agent
       - REDIS_SERVER_HOST=redis
     ports:
       - '3010:3010'
