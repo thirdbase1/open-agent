@@ -21,24 +21,16 @@ declare global {
   interface AppConfigSchema {
     copilot: {
       enabled: boolean;
-      unsplash: ConfigItem<{
-        key: string;
-      }>;
-      exa: ConfigItem<{
-        key: string;
-      }>;
-      cloudsway: ConfigItem<{
+      unsplash: { key: string };
+      exa: { key: string };
+      cloudsway: {
         basePath: string;
         readEndpoint: string;
         searchEndpoint: string;
         accessKey: string;
-      }>;
-      e2b: ConfigItem<{
-        key: string;
-      }>;
-      browserUse: ConfigItem<{
-        key: string;
-      }>;
+      };
+      e2b: { key: string };
+      browserUse: { key: string };
       storage: ConfigItem<StorageProviderConfig>;
       scenarios: ConfigItem<CopilotPromptScenario>;
       // openai/fal/gemini/perplexity/anthropic/morph are plain nested
@@ -168,38 +160,44 @@ defineModuleConfig('copilot', {
     default: {},
     schema: OracleSchema,
   },
-  unsplash: {
-    desc: 'The config for the unsplash key.',
-    default: {
-      key: '',
-    },
+  'unsplash.key': {
+    desc: 'API key for Unsplash image search.',
+    default: '',
+    env: 'UNSPLASH_ACCESS_KEY',
   },
-  exa: {
-    desc: 'The config for the exa web search key.',
-    default: {
-      key: '',
-    },
+  'exa.key': {
+    desc: 'API key for Exa web search.',
+    default: '',
+    env: 'EXA_API_KEY',
   },
-  cloudsway: {
-    desc: 'The config for the Cloudsway web search and reader.',
-    default: {
-      basePath: 'https://searchapi.cloudsway.net',
-      readEndpoint: '',
-      searchEndpoint: '',
-      accessKey: '',
-    },
+  'cloudsway.basePath': {
+    desc: 'Base path for the Cloudsway web search and reader API.',
+    default: 'https://searchapi.cloudsway.net',
   },
-  browserUse: {
-    desc: 'The config for the browser use key',
-    default: {
-      key: '',
-    },
+  'cloudsway.readEndpoint': {
+    desc: 'Read endpoint for Cloudsway.',
+    default: '',
+    env: 'CLOUDSWAY_READ_ENDPOINT',
   },
-  e2b: {
-    desc: 'The config for the e2b key',
-    default: {
-      key: '',
-    },
+  'cloudsway.searchEndpoint': {
+    desc: 'Search endpoint for Cloudsway.',
+    default: '',
+    env: 'CLOUDSWAY_SEARCH_ENDPOINT',
+  },
+  'cloudsway.accessKey': {
+    desc: 'Access key for Cloudsway.',
+    default: '',
+    env: 'CLOUDSWAY_ACCESS_KEY',
+  },
+  'browserUse.key': {
+    desc: 'API key for browser-use.com (used by the browser-use agent tool).',
+    default: '',
+    env: 'BROWSER_USE_API_KEY',
+  },
+  'e2b.key': {
+    desc: 'API key for the E2B sandbox tool.',
+    default: '',
+    env: 'E2B_API_KEY',
   },
   storage: {
     desc: 'The config for the storage provider.',
