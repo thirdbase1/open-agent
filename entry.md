@@ -113,12 +113,45 @@ Split into two Vercel Services for independent deploys/scaling:
     sandbox down, the *filesystem* survives (files, installed packages) but in-memory variables reset — same
     tradeoff as restarting a real Jupyter kernel.
 
-## 5. Still open / needs your input before Phase 1 goes live
+## 5. Redis → Upstash (Vercel Marketplace) — done, verified against docs
 
-- Where does Postgres/Redis live? Options: keep your current managed instances and pass `DATABASE_URL`/
-  Redis URL as Vercel env vars, or move to a Vercel Marketplace add-on (e.g. Upstash Redis). Either works
-  with Phase 1 as-is; Vercel Connect is a nicer long-term answer if these become internal-only.
-  need `AI_GATEWAY_API_KEY` set (they don't, on Vercel), since it falls back to `VERCEL_OIDC_TOKEN`
-  automatically — already handled in this migration.
+Confirmed facts before touching any code (all from official docs, not guessed):
+- Upstash (like Redis Cluster / most managed Redis) **only supports database 0** — `SELECT 1/2/3` doesn't
+  work. Source: redis.io command docs on `SELECT` + Upstash limitations docs. This app used to separate
+  cache/session/socketio/queue traffic by `db` index (`0/2/3/4`) — that no longer works on Upstash.
+- BullMQ officially works with Upstash over the standard TCP protocol: `{ host, port: 6379, password, tls: {} }`
+  — confirmed on Upstash's own BullMQ integration doc. Note from the same page: BullMQ polls Redis
+  continuously even when idle, which adds up on Upstash's Pay-As-You-Go pricing — **use a Fixed plan** if
+  you're putting real queue traffic through it.
+- BullMQ's own docs explicitly warn: do **not** use ioredis's `keyPrefix` on a BullMQ connection — it's
+  "not compatible with BullMQ" and can corrupt the keys its Lua scripts build internally. BullMQ has its own
+  `prefix` option for this (already configured in `job/queue/index.ts` as `open_agent_job[_env]` — that was
+  already the real isolation mechanism for queues, the old `db + 4` was redundant with it).
+
+What changed:
+- `base/redis/instances.ts`: cache/session/socketio Redis clients now isolate their keys with ioredis
+  `keyPrefix` (`cache:`, `session:`, `socketio:`) instead of a `db` offset — this works identically on
+  self-hosted Redis or Upstash. The queue Redis client gets **no** keyPrefix (per the BullMQ warning above)
+  and just relies on the existing BullMQ-level `prefix`.
+- `base/redis/config.ts`: added a `tls` config field (env `REDIS_ENABLE_TLS`) since Upstash is TLS-only.
+- `base/redis/url.ts` (new): if `REDIS_URL`, `KV_URL`, or `UPSTASH_REDIS_URL` is set (whichever Vercel's
+  Upstash integration ends up naming it — the exact single-URL env var name wasn't confirmable from the docs
+  I could reach, so this checks the common ones), it's parsed into host/port/user/pass/tls automatically —
+  scheme `rediss://` implies TLS. If none of those are set, it falls back to the existing discrete
+  `REDIS_SERVER_HOST/PORT/USERNAME/PASSWORD` env vars unchanged, so local/self-hosted setups
+  (`.docker/docker-compose.yml`) keep working exactly as before.
+- In Vercel: after you add the Upstash integration, check what env var name it actually injects for the
+  plain TCP connection. If it's not one of the three above, either rename it in Vercel's env var UI to
+  `REDIS_URL`, or set the discrete `REDIS_SERVER_HOST/PORT/USERNAME/PASSWORD` + `REDIS_ENABLE_TLS=true` from
+  the values Upstash's dashboard shows you.
+
+## 6. Still open / needs your input
+
+- Object storage (`base/storage/providers/s3.ts` and `r2.ts`) is currently S3-API-compatible (works with
+  Cloudflare R2 today). Vercel's own storage product, Vercel Blob, is **not** S3-API-compatible — swapping
+  to it would be a real code change (different SDK, different API shape), not a drop-in env var swap like
+  Redis was. Didn't touch this without you confirming you actually want that move.
+- Postgres: still whatever `DATABASE_URL` points at. Vercel Marketplace also offers managed Postgres
+  (Neon-backed) if you want that to be Vercel-native too — same story, confirm before I touch it.
 - Confirm which OAuth/provider secrets need to move from your local `config.example.json` into the Vercel
   project's environment variables before first deploy.
