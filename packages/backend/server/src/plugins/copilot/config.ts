@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import {
   defineModuleConfig,
   StorageJSONSchema,
@@ -39,15 +41,21 @@ declare global {
       }>;
       storage: ConfigItem<StorageProviderConfig>;
       scenarios: ConfigItem<CopilotPromptScenario>;
+      // openai/fal/gemini/perplexity/anthropic/morph are plain nested
+      // objects (not `ConfigItem<T>`) so each field is its own leaf config
+      // path and apiKey can carry an `env` binding — same pattern as
+      // mailer's `SMTP.host`. geminiVertex/anthropicVertex/oracle use GCP
+      // service-account/OCI credentials rather than a single api key, left
+      // as opaque ConfigItem objects (unchanged, out of scope here).
       providers: {
-        openai: ConfigItem<OpenAIConfig>;
-        fal: ConfigItem<FalConfig>;
-        gemini: ConfigItem<GeminiGenerativeConfig>;
+        openai: OpenAIConfig;
+        fal: FalConfig;
+        gemini: GeminiGenerativeConfig;
         geminiVertex: ConfigItem<GeminiVertexConfig>;
-        perplexity: ConfigItem<PerplexityConfig>;
-        anthropic: ConfigItem<AnthropicOfficialConfig>;
+        perplexity: PerplexityConfig;
+        anthropic: AnthropicOfficialConfig;
         anthropicVertex: ConfigItem<AnthropicVertexConfig>;
-        morph: ConfigItem<MorphConfig>;
+        morph: MorphConfig;
         oracle: ConfigItem<OracleConfig>;
       };
     };
@@ -77,57 +85,83 @@ defineModuleConfig('copilot', {
       },
     },
   },
-  'providers.openai': {
-    desc: 'The config for the openai provider.',
-    default: {
-      apiKey: '',
-      baseURL: 'https://api.openai.com/v1',
-      useGateway: true,
-    },
+  'providers.openai.apiKey': {
+    desc: 'API key for the openai provider.',
+    default: '',
+    env: 'OPENAI_API_KEY',
     link: 'https://github.com/openai/openai-node',
   },
-  'providers.fal': {
-    desc: 'The config for the fal provider.',
-    default: {
-      apiKey: '',
-    },
+  'providers.openai.baseURL': {
+    desc: 'Base URL for the openai provider.',
+    default: 'https://api.openai.com/v1',
   },
-  'providers.gemini': {
-    desc: 'The config for the gemini provider.',
-    default: {
-      apiKey: '',
-      baseURL: 'https://generativelanguage.googleapis.com/v1beta',
-      useGateway: true,
-    },
+  'providers.openai.oldApiStyle': {
+    desc: 'Whether to use the legacy (pre-Responses) OpenAI API style.',
+    default: false,
+  },
+  'providers.openai.useGateway': {
+    desc: 'Whether to route openai calls through Vercel AI Gateway.',
+    default: true,
+  },
+  'providers.fal.apiKey': {
+    desc: 'API key for the fal provider.',
+    default: '',
+    env: 'FAL_API_KEY',
+  },
+  'providers.gemini.apiKey': {
+    desc: 'API key for the gemini provider.',
+    default: '',
+    env: 'GOOGLE_GENERATIVE_AI_API_KEY',
+  },
+  'providers.gemini.baseURL': {
+    desc: 'Base URL for the gemini provider.',
+    default: 'https://generativelanguage.googleapis.com/v1beta',
+  },
+  'providers.gemini.useGateway': {
+    desc: 'Whether to route gemini calls through Vercel AI Gateway.',
+    default: true,
   },
   'providers.geminiVertex': {
     desc: 'The config for the gemini provider in Google Vertex AI.',
     default: {},
     schema: VertexSchema,
   },
-  'providers.perplexity': {
-    desc: 'The config for the perplexity provider.',
-    default: {
-      apiKey: '',
-      useGateway: true,
-    },
+  'providers.perplexity.apiKey': {
+    desc: 'API key for the perplexity provider.',
+    default: '',
+    env: 'PERPLEXITY_API_KEY',
   },
-  'providers.anthropic': {
-    desc: 'The config for the anthropic provider.',
-    default: {
-      apiKey: '',
-      baseURL: 'https://api.anthropic.com/v1',
-      useGateway: true,
-    },
+  'providers.perplexity.endpoint': {
+    desc: 'Custom base URL for the perplexity provider (only used when useGateway is false).',
+    default: undefined,
+    shape: z.string().optional(),
+  },
+  'providers.perplexity.useGateway': {
+    desc: 'Whether to route perplexity calls through Vercel AI Gateway.',
+    default: true,
+  },
+  'providers.anthropic.apiKey': {
+    desc: 'API key for the anthropic provider.',
+    default: '',
+    env: 'ANTHROPIC_API_KEY',
+  },
+  'providers.anthropic.baseURL': {
+    desc: 'Base URL for the anthropic provider.',
+    default: 'https://api.anthropic.com/v1',
+  },
+  'providers.anthropic.useGateway': {
+    desc: 'Whether to route anthropic calls through Vercel AI Gateway.',
+    default: true,
   },
   'providers.anthropicVertex': {
     desc: 'The config for the anthropic provider in Google Vertex AI.',
     default: {},
     schema: VertexSchema,
   },
-  'providers.morph': {
-    desc: 'The config for the morph provider.',
-    default: {},
+  'providers.morph.apiKey': {
+    desc: 'API key for the morph provider.',
+    default: '',
+    env: 'MORPH_API_KEY',
   },
   'providers.oracle': {
     desc: 'The config for the oracle provider.',

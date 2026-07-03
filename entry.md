@@ -170,13 +170,9 @@ and `process.env` usages — this is the real, complete list, not a generic chec
 *AI / Copilot:*
 8. AI_GATEWAY_API_KEY — optional on Vercel, falls back automatically to VERCEL_OIDC_TOKEN (already wired).
 
-*What's deliberately NOT an env var, so I'm not going to invent one:*
-- OAuth providers (Google/GitHub/Apple/OIDC client id+secret) and AI provider API keys (OpenAI, Anthropic,
-  Fal, Morph, Perplexity individual keys) are **runtime, database-backed config** in this app (AFFiNE's
-  admin-configurable runtime settings) — set after deploy via the admin API/GraphQL, not via Vercel env vars.
-  If you want these to be settable as plain env vars instead (simpler for a Vercel-only deploy, no admin UI
-  step), that's a real code change to how the runtime config module reads its defaults — say the word and
-  I'll wire it, rather than silently assuming.
+*Update: OAuth client secrets and AI provider keys are now plain env vars too — see §8a below.*
+
+*Still NOT an env var:*
 - Object storage (avatar/blob uploads) defaults to **local filesystem** (`~/.open-agent/storage`), also
   runtime-config-driven, not env-var-driven. This will not work on Vercel — Vercel's containers don't have
   a persistent writable disk across deploys/restarts. Before going live you must set the avatar/blob storage
@@ -203,6 +199,39 @@ official Supabase guide:
   convention used `POSTGRES_PRISMA_URL` / `POSTGRES_URL_NON_POOLING`, but confirm what you actually see).
   Map whichever one uses port 6543 (pooled) to `DATABASE_URL`, and whichever uses port 5432 (direct) to
   `DIRECT_URL`.
+
+## 8a. OAuth + AI provider keys → now plain Vercel env vars (done)
+
+You can now set these directly as Vercel project env vars instead of needing the admin API step —
+config precedence is: hardcoded default < env var < config.json < runtime DB override (admin API still
+works exactly as before if you ever do want to override at runtime instead).
+
+OAuth (each provider now has its own clientId/clientSecret leaf, was one opaque object before):
+1. OAUTH_GOOGLE_CLIENT_ID / OAUTH_GOOGLE_CLIENT_SECRET
+2. OAUTH_GITHUB_CLIENT_ID / OAUTH_GITHUB_CLIENT_SECRET
+3. OAUTH_APPLE_CLIENT_ID / OAUTH_APPLE_CLIENT_SECRET
+4. OAUTH_OIDC_CLIENT_ID / OAUTH_OIDC_CLIENT_SECRET / OAUTH_OIDC_ISSUER
+
+AI providers (env var names match each provider's own AI SDK 7 default — confirmed against
+ai-sdk.dev's provider pages — so these also work if you ever use the SDK's own auto-detection elsewhere):
+1. OPENAI_API_KEY
+2. ANTHROPIC_API_KEY
+3. GOOGLE_GENERATIVE_AI_API_KEY (gemini)
+4. PERPLEXITY_API_KEY
+5. FAL_API_KEY
+6. MORPH_API_KEY (not in AI SDK's own provider catalog — this is my own consistent naming choice, not
+   pulled from an official Morph doc page)
+
+Code change: `plugins/oauth/config.ts` and `plugins/copilot/config.ts` — split each provider's config from
+one opaque object into individual leaf fields (clientId, clientSecret, apiKey, baseURL, useGateway, etc,
+matching the same `SMTP.host`-style pattern mailer already used), each of which can now carry its own `env`
+binding. Runtime shape consumed by the actual provider code (`this.config.apiKey`, `this.config.clientId`,
+...) is unchanged, so no other files needed touching.
+
+Left alone (didn't touch, no confirmed consumer found in the codebase to safely verify against):
+unsplash/exa/e2b/browserUse/cloudsway keys, and geminiVertex/anthropicVertex/oracle (these use GCP service
+account JSON / OCI credentials, not a simple API key — different shape of problem, ask if you want these
+too).
 
 ## 8. Auth → Supabase — NOT done, and here's why I didn't just wire it fast
 
