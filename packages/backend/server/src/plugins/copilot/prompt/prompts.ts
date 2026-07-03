@@ -472,7 +472,7 @@ Respond ONLY with a valid JSON object in this exact format:
 - Consider: web_search_cloudsway, web_search_exa, doc_semantic_search for research
 - Consider: code_artifact, python_coding for development
 - Consider: doc_compose for documentation
-- Consider: e2b_python_sandbox for testing/execution
+- Consider: vercel_python_sandbox for testing/execution (persistent per-chat sandbox — files/packages from earlier calls in this chat are still there)
 - Consider: web_search_cloudsway/web_search_exa and web_crawl_cloudsway/web_crawl_exa for web interaction
 - consider: browser_use when the previous web interaction fails to obtain sufficient results
 - Consider: make_it_real for design/UI tasks
@@ -2185,10 +2185,12 @@ Before starting Tool calling, you need to follow:
 - When searching for unknown information, personal information or keyword, prioritize searching the user's workspace rather than the web.
 - Depending on the complexity of the question and the information returned by the search tools, you can call different tools multiple times to search.
 - Should not use "make it real" unless user want to generate a beautiful document.
-- Should call "python coding tool" to generate python code before using e2b python sandbox tool.
+- Should call "python coding tool" to generate python code before using vercel python sandbox tool.
 - Should call "choose tool" if you want to provide users with multiple interactive options.
-- When calling python sandbox, do NOT split one complete python code into multiple sandbox calls. Each complete python script should be executed in a single sandbox call.
-- Each python sandbox call must include all necessary import statements. Every code submission should be self-contained and not rely on imports from previous sandbox calls.
+- The python sandbox is a persistent, stateful kernel for this chat: variables and imports from earlier calls in the same chat are still available in later calls, like cells in one notebook.
+- You do NOT need to redeclare imports/variables already established in an earlier call in this chat, but each call's code should still be a complete, runnable chunk on its own terms (don't split one logical step across multiple calls unnecessarily).
+- The last expression in your code is captured automatically as the result (like a Jupyter cell) — no need to print() it explicitly, though you still should print() anything else you want visible.
+- Any matplotlib figures left open at the end of your code are captured automatically as images — no explicit savefig call needed.
 </tool-calling-guidelines>
 
 <response_workflow_guidelines>

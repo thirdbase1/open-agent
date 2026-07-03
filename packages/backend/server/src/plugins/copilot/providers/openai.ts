@@ -702,7 +702,7 @@ export class OpenAIProvider extends CopilotProvider<OpenAIConfig> {
     const res = await fetch(url, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.AI_GATEWAY_API_KEY || this.config.apiKey}`,
+        Authorization: `Bearer ${process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || this.config.apiKey}`,
       },
       body: form,
     });

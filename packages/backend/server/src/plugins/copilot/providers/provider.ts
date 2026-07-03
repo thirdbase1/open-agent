@@ -25,7 +25,7 @@ import {
   createConversationSummaryTool,
   createDocComposeTool,
   createDocSemanticSearchTool,
-  createE2bPythonSandboxTool,
+  createVercelPythonSandboxTool,
   createExaCrawlTool,
   createExaSearchTool,
   createMakeItRealTool,
@@ -281,11 +281,12 @@ export abstract class CopilotProvider<C = any> {
           }
           case 'pythonSandbox': {
             const copilotStorage = this.copilotStorage;
-            tools.e2b_python_sandbox = createE2bPythonSandboxTool(
+            tools.vercel_python_sandbox = createVercelPythonSandboxTool(
               writable,
               this.OpenAgentConfig,
               copilotStorage,
-              options.user || ''
+              options.user || '',
+              options.sessionId
             );
             break;
           }

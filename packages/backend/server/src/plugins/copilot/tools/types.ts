@@ -8,7 +8,7 @@ import type { createCodeArtifactTool } from './code-artifact';
 import type { createConversationSummaryTool } from './conversation-summary';
 import type { createDocComposeTool } from './doc-compose';
 import type { createDocSemanticSearchTool } from './doc-semantic-search';
-import type { createE2bPythonSandboxTool } from './e2b-python-sandbox';
+import type { createVercelPythonSandboxTool } from './vercel-python-sandbox';
 import type { createExaCrawlTool } from './exa-crawl';
 import type { createExaSearchTool } from './exa-search';
 import type { createMakeItRealTool } from './make-it-real';
@@ -23,7 +23,7 @@ export interface CustomAITools extends ToolSet {
   conversation_summary: ReturnType<typeof createConversationSummaryTool>;
   doc_semantic_search: ReturnType<typeof createDocSemanticSearchTool>;
   doc_compose: ReturnType<typeof createDocComposeTool>;
-  e2b_python_sandbox: ReturnType<typeof createE2bPythonSandboxTool>;
+  vercel_python_sandbox: ReturnType<typeof createVercelPythonSandboxTool>;
   web_search_exa: ReturnType<typeof createExaSearchTool>;
   web_crawl_exa: ReturnType<typeof createExaCrawlTool>;
   web_search_cloudsway: ReturnType<typeof createCloudswaySearchTool>;
@@ -32,7 +32,7 @@ export interface CustomAITools extends ToolSet {
   mark_todo: ReturnType<typeof createMarkTodoTool>;
   make_it_real: ReturnType<typeof createMakeItRealTool>;
   python_coding: ReturnType<typeof createPythonCodingTool>;
-  python_sandbox: ReturnType<typeof createE2bPythonSandboxTool>;
+  python_sandbox: ReturnType<typeof createVercelPythonSandboxTool>;
   task_analysis: ReturnType<typeof createTaskAnalysisTool>;
 }
 
@@ -47,7 +47,7 @@ export const Tools = [
   'web_search_exa',
   'web_crawl_exa',
   'python_coding',
-  'e2b_python_sandbox',
+  'vercel_python_sandbox',
   'make_it_real',
   'conversation_summary',
   'todo_list',

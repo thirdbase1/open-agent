@@ -125,7 +125,7 @@ export const PromptTools = z
     'makeItReal',
     // python coding
     'pythonCoding',
-    // e2b python sandbox
+    // vercel python sandbox
     'pythonSandbox',
   ])
   .array();

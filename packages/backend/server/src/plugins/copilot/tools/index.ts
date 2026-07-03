@@ -6,7 +6,7 @@ export * from './code-artifact';
 export * from './conversation-summary';
 export * from './doc-compose';
 export * from './doc-semantic-search';
-export * from './e2b-python-sandbox';
+export * from './vercel-python-sandbox';
 export * from './error';
 export * from './exa-crawl';
 export * from './exa-search';

@@ -563,7 +563,7 @@ export class TextStreamParser extends BaseStreamParser<string> {
             result += `\nGenerating python code\n`;
             break;
           }
-          case 'e2b_python_sandbox': {
+          case 'vercel_python_sandbox': {
             result += `\nExecuting python code in sandbox\n`;
             break;
           }
@@ -621,7 +621,7 @@ export class TextStreamParser extends BaseStreamParser<string> {
             }
             break;
           }
-          case 'e2b_python_sandbox': {
+          case 'vercel_python_sandbox': {
             break;
           }
         }
