@@ -77,7 +77,6 @@ RUN (apt-get update 2>/dev/null || true) && \
     apt-get install -y --no-install-recommends apt-utils 2>/dev/null && \
     apt-get install -y --no-install-recommends \
     openssl \
-    libjemalloc2 \
     ca-certificates \
     2>/dev/null && \
     rm -rf /var/lib/apt/lists/*
@@ -91,5 +90,8 @@ RUN if [ ! -f ./node_modules/@afk/server-native/server-native.node ] && [ -f ./n
     fi
 
 ENV NODE_ENV=production
+# Vercel routes traffic to port 80 by default.
+# Set PORT env var in Vercel to override.
+ENV OPEN_AGENT_SERVER_PORT=80
 
-CMD ["sh", "-c", "if [ -f /usr/lib/x86_64-linux-gnu/libjemalloc.so.2 ]; then export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2; fi && (npx prisma migrate deploy --schema schema.prisma 2>&1 | head -5 || echo '[open-agent] Migration deferred') & OPEN_AGENT_SERVER_PORT=${PORT:-80} node dist/main.mjs"]
+CMD ["node", "dist/main.mjs"]
