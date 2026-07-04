@@ -256,3 +256,81 @@ to start whenever you say go, just didn't want to bundle a risky one under "fast
   (Neon-backed) if you want that to be Vercel-native too — same story, confirm before I touch it.
 - Confirm which OAuth/provider secrets need to move from your local `config.example.json` into the Vercel
   project's environment variables before first deploy.
+
+## 8. AWS-native deployment (Aurora PostgreSQL + S3) — Vercel Marketplace
+
+Instead of Supabase + Cloudflare R2, this setup uses AWS services from the
+Vercel Marketplace AWS integration. Both are drop-in replacements — no code
+changes needed, just environment variables.
+
+### 8a. Database — Amazon Aurora PostgreSQL
+
+Aurora PostgreSQL is wire-compatible with standard PostgreSQL. The project's
+Prisma schema (`schema.prisma`) uses `provider = "postgresql"` with
+`url = env("DATABASE_URL")` and `directUrl = env("DIRECT_URL")`, so it works
+with Aurora out of the box. The `pgvector` extension is supported on Aurora
+PostgreSQL 15.3+ (enable with `CREATE EXTENSION vector;`).
+
+Aurora Serverless v2 has no separate connection pooler (unlike Supabase's
+Supavisor), so both `DATABASE_URL` and `DIRECT_URL` point to the same
+cluster writer endpoint:
+
+```
+DATABASE_URL=postgresql://user:password@cluster-writer.region.rds.amazonaws.com:5432/open_agent
+DIRECT_URL=postgresql://user:password@cluster-writer.region.rds.amazonaws.com:5432/open_agent
+```
+
+The $100 free credits from the Vercel AWS Marketplace integration cover
+Aurora Serverless v2 usage during development. Aurora scales to zero when
+idle (with a small ACU floor), so costs stay minimal for low-traffic apps.
+
+### 8b. Storage — Amazon S3 (instead of Cloudflare R2)
+
+The `StorageProviderFactory` (base/storage/factory.ts) now auto-detects
+S3 credentials from env vars. When these are present, they override the
+config-file / admin-panel storage settings:
+
+```
+AWS_S3_ACCESS_KEY_ID=your-aws-access-key
+AWS_S3_SECRET_ACCESS_KEY=your-aws-secret-key
+AWS_S3_BUCKET=your-bucket-name
+AWS_S3_REGION=us-east-1
+```
+
+Optional: `AWS_S3_ENDPOINT` for S3-compatible alternatives or VPC endpoints.
+
+The existing `aws-s3` provider uses the official `@aws-sdk/client-s3`
+package (already in dependencies). All three storage slots (copilot blobs,
+user avatars, general uploads) are routed to S3 when the env vars are set.
+
+S3 free tier: 5 GB storage, 20K GET + 2K PUT requests/month, 100 GB data
+transfer out/month. Covered by the $100 free credits beyond that.
+
+### 8c. Complete AWS env var set for Vercel
+
+```
+# Database (Aurora PostgreSQL)
+DATABASE_URL=postgresql://...@cluster-writer.region.rds.amazonaws.com:5432/open_agent
+DIRECT_URL=postgresql://...@cluster-writer.region.rds.amazonaws.com:5432/open_agent
+
+# Storage (S3)
+AWS_S3_ACCESS_KEY_ID=...
+AWS_S3_SECRET_ACCESS_KEY=...
+AWS_S3_BUCKET=open-agent-storage
+AWS_S3_REGION=us-east-1
+
+# Redis (Upstash — still Vercel Marketplace, no AWS equivalent needed)
+REDIS_URL=rediss://default:password@xxx.upstash.io:6379
+
+# AI Gateway (automatic on Vercel via OIDC, or set explicit key)
+AI_GATEWAY_API_KEY=optional
+
+# OAuth (Google + GitHub + OIDC)
+OAUTH_GOOGLE_CLIENT_ID=...
+OAUTH_GOOGLE_CLIENT_SECRET=...
+OAUTH_GITHUB_CLIENT_ID=...
+OAUTH_GITHUB_CLIENT_SECRET=...
+OAUTH_OIDC_CLIENT_ID=...
+OAUTH_OIDC_CLIENT_SECRET=...
+OAUTH_OIDC_ISSUER=...
+```
