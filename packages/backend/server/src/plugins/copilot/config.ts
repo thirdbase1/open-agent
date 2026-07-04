@@ -146,8 +146,8 @@ defineModuleConfig('copilot', {
     env: 'FIRECRAWL_API_KEY',
   },
   'agentBrowser.command': {
-    desc: 'Command to invoke agent-browser CLI.',
-    default: 'npx -y agent-browser',
+    desc: 'Command to invoke agent-browser CLI (used as fallback; primary path is Vercel Sandbox).',
+    default: 'agent-browser',
     env: 'AGENT_BROWSER_COMMAND',
   },
   storage: {

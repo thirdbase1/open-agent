@@ -189,7 +189,11 @@ export abstract class CopilotProvider<C = any> {
         }
         switch (tool) {
           case 'browserUse': {
-            tools.agent_browser = createAgentBrowserTool(this.OpenAgentConfig);
+            tools.agent_browser = createAgentBrowserTool(
+              this.OpenAgentConfig,
+              options.sessionId,
+              options.user
+            );
             break;
           }
           case 'codeArtifact': {

@@ -371,7 +371,9 @@ process.env reference, and every env: binding in the NestJS config system.
 - UNSPLASH_ACCESS_KEY — Image search
 - PARALLEL_API_KEY — Web search & extract
 - FIRECRAWL_API_KEY — Web crawling
-- AGENT_BROWSER_COMMAND — Browser automation CLI
+- AGENT_BROWSER_COMMAND — Browser automation CLI (fallback; primary path is Vercel Sandbox)
+- AGENT_BROWSER_SNAPSHOT_ID — [OPTIONAL] Vercel Sandbox snapshot ID for sub-second browser startup
+- Browser automation runs inside isolated Vercel Sandbox microVMs, not in the Docker container
 
 **[OPTIONAL — OAuth social login]**
 - OAUTH_GOOGLE_CLIENT_ID / OAUTH_GOOGLE_CLIENT_SECRET

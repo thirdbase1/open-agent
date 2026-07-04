@@ -315,6 +315,33 @@ outside Vercel, set `AI_GATEWAY_API_KEY` manually. If you want direct-to-vendor
 calls instead of the gateway, set the provider's API key and disable the
 gateway via the admin config API after deploy.
 
+### Browser automation not working
+agent-browser runs inside a Vercel Sandbox microVM, not in the Docker container.
+On Vercel, sandbox auth is automatic via OIDC. For faster startup (sub-second
+vs ~30s), create a sandbox snapshot and set `AGENT_BROWSER_SNAPSHOT_ID` as an
+env var. See https://agent-browser.dev/next for details.
+
+### FUNCTION_INVOCATION_FAILED (container crash at runtime)
+Check the Vercel Logs tab for the actual error. Common causes:
+1. Missing DATABASE_URL or REDIS_URL env vars (app falls back to localhost)
+2. DATABASE_URL with special chars in password — ensure the connection string
+   is properly URL-encoded (we removed strict .url() validation but Prisma
+   still needs a valid connection string)
+3. Port mismatch — the Dockerfile maps $PORT (Vercel default: 80) to
+   OPEN_AGENT_SERVER_PORT. Do not set PORT manually in Vercel settings
+4. Native module loading failure — the Rust .node binary must match the
+   container architecture (amd64). The Dockerfile builds from source if
+   a pre-built binary is not found
+
+### Build warnings: "apt does not have a stable CLI interface"
+This is a harmless warning from apt-get in the Dockerfile. We set
+`DEBIAN_FRONTEND=noninteractive` to suppress interactive prompts. The
+apt operations complete successfully despite the warning.
+
+### Build warnings: "debconf: delaying package configuration"
+We added `apt-utils` to the install list to resolve this. It is cosmetic
+and does not affect the build output.
+
 ---
 
 ## File reference
