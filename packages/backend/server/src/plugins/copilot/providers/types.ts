@@ -43,6 +43,12 @@ export const PromptTools = z
     'pythonCoding',
     // vercel python sandbox
     'pythonSandbox',
+    // web fetch (no browser/API needed)
+    'webFetch',
+    // url scanner (metadata, links, SEO)
+    'urlScanner',
+    // quick compute (JS eval for fast calculations)
+    'quickCompute',
   ])
   .array();
 

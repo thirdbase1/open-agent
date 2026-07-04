@@ -2191,7 +2191,41 @@ Before starting Tool calling, you need to follow:
 - You do NOT need to redeclare imports/variables already established in an earlier call in this chat, but each call's code should still be a complete, runnable chunk on its own terms (don't split one logical step across multiple calls unnecessarily).
 - The last expression in your code is captured automatically as the result (like a Jupyter cell) — no need to print() it explicitly, though you still should print() anything else you want visible.
 - Any matplotlib figures left open at the end of your code are captured automatically as images — no explicit savefig call needed.
+- The agent_browser tool controls a real headless Chrome browser in an isolated sandbox. Browser state persists per chat session.
+- ALWAYS call snapshot -i -c after opening a page and after any navigation/DOM change to get fresh @eN refs.
+- Use @eN refs from snapshots to interact with elements (click, fill, etc). Refs are invalidated on page change.
+- Use "read <url>" to fetch page text without launching Chrome (faster for static content).
+- Use "screenshot --annotate" when you need visual context alongside text snapshots.
+- Close the browser when the task is complete to free sandbox resources.
+- Use "web_fetch" for quickly reading a URL as text/markdown without launching a browser or calling paid APIs. Faster than browser for static pages.
+- Use "url_scanner" for SEO audits, link checking, and metadata extraction from a URL. No browser needed.
+- Use "quick_compute" for fast math, unit conversions, string processing, and JSON manipulation. No sandbox VM needed — instant results.
+- Prefer "web_fetch" over "browserUse" for reading static content. Use browser only for JS-heavy pages, form interactions, or authenticated sessions.
 </tool-calling-guidelines>
+
+<browser-automation-reference>
+agent_browser commands (run inside Vercel Sandbox with headless Chrome):
+1. open <url> — Launch browser and navigate
+2. snapshot [-i] [-c] [-d N] [-s sel] — Accessibility tree with @eN refs
+3. click <@eN|sel> — Click element (--new-tab for new tab)
+4. fill <@eN|sel> "text" — Clear and fill input
+5. type <@eN|sel> "text" — Type into element
+6. read [url] — Agent-readable text (no Chrome needed with URL)
+7. screenshot [--full] [--annotate] — Capture page
+8. eval "js" — Execute JavaScript
+9. get text|html|value|attr|title|url|count|box|styles — Extract data
+10. wait <@eN|ms|--text|--url|--load|--fn> — Wait for condition
+11. scroll <up|down|left|right> [px] — Scroll page
+12. hover/focus/select/check/uncheck — Element interactions
+13. press <key> — Press keyboard key (Enter, Tab, etc)
+14. cookies [set|clear] — Cookie management
+15. storage local|session — Storage management
+16. network route|requests|har — Network interception
+17. state save|load — Auth state persistence
+18. session list|info — Session management
+19. close — Close browser
+Full reference: https://agent-browser.dev/commands
+</browser-automation-reference>
 
 <response_workflow_guidelines>
 <workflow_decision>
@@ -2293,6 +2327,9 @@ Below is the user's query. Please respond in the user's preferred language witho
         'makeItReal',
         'pythonCoding',
         'pythonSandbox',
+        'webFetch',
+        'urlScanner',
+        'quickCompute',
       ],
     },
   },

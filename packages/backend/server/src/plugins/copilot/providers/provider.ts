@@ -18,6 +18,9 @@ import {
   buildDocSearchGetter,
   buildSaveDocGetter,
   createAgentBrowserTool,
+  createWebFetchTool,
+  createUrlScannerTool,
+  createQuickComputeTool,
   createChooseTool,
     createCodeArtifactTool,
   createConversationSummaryTool,
@@ -282,6 +285,18 @@ export abstract class CopilotProvider<C = any> {
               options.user || '',
               options.sessionId
             );
+            break;
+          }
+          case 'webFetch': {
+            tools.web_fetch = createWebFetchTool();
+            break;
+          }
+          case 'urlScanner': {
+            tools.url_scanner = createUrlScannerTool();
+            break;
+          }
+          case 'quickCompute': {
+            tools.quick_compute = createQuickComputeTool();
             break;
           }
         }
