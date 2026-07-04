@@ -21,6 +21,9 @@ import {
   createWebFetchTool,
   createUrlScannerTool,
   createQuickComputeTool,
+  createDesignGeneratorTool,
+  createDesignSystemTool,
+  createVisualPolishTool,
   createChooseTool,
     createCodeArtifactTool,
   createConversationSummaryTool,
@@ -129,9 +132,15 @@ export abstract class CopilotProvider<C = any> {
     }
     if (!outputType) return undefined;
 
-    return this.models.find(m =>
+    // First try to find a model with defaultForOutputType flag
+    const defaultModel = this.models.find(m =>
       m.capabilities.some(c => matcher(c) && c.defaultForOutputType)
     );
+    if (defaultModel) return defaultModel;
+
+    // Fallback: return the first model that matches the capability criteria.
+    // This prevents crashes when no model has defaultForOutputType set.
+    return this.models.find(m => m.capabilities.some(matcher));
   }
 
   // make it async to allow dynamic check available models in some providers
@@ -297,6 +306,22 @@ export abstract class CopilotProvider<C = any> {
           }
           case 'quickCompute': {
             tools.quick_compute = createQuickComputeTool();
+            break;
+          }
+          case 'designGenerator': {
+            tools.design_generator = createDesignGeneratorTool(
+              writable,
+              prompt,
+              this.factory
+            );
+            break;
+          }
+          case 'designSystem': {
+            tools.design_system = createDesignSystemTool();
+            break;
+          }
+          case 'visualPolish': {
+            tools.visual_polish = createVisualPolishTool();
             break;
           }
         }

@@ -49,6 +49,12 @@ export const PromptTools = z
     'urlScanner',
     // quick compute (JS eval for fast calculations)
     'quickCompute',
+    // advanced design generator with anti-slop rules
+    'designGenerator',
+    // design system presets and validation
+    'designSystem',
+    // visual polish and anti-slop checker
+    'visualPolish',
   ])
   .array();
 

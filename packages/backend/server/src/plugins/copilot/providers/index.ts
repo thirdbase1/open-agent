@@ -4,7 +4,14 @@ import { MorphProvider } from './morph';
 import { OpenAIProvider } from './openai';
 import { PerplexityProvider } from './perplexity';
 
-export const CopilotProviders = [OpenAIProvider, GeminiGenerativeProvider, PerplexityProvider, AnthropicOfficialProvider, MorphProvider];
+export const CopilotProviders = [
+  OpenAIProvider,
+  GeminiGenerativeProvider,
+  PerplexityProvider,
+  AnthropicOfficialProvider,
+  MorphProvider,
+];
+
 export { AnthropicOfficialProvider } from './anthropic';
 export { CopilotProviderFactory } from './factory';
 export { GeminiGenerativeProvider } from './gemini';

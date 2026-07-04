@@ -2201,6 +2201,11 @@ Before starting Tool calling, you need to follow:
 - Use "url_scanner" for SEO audits, link checking, and metadata extraction from a URL. No browser needed.
 - Use "quick_compute" for fast math, unit conversions, string processing, and JSON manipulation. No sandbox VM needed — instant results.
 - Prefer "web_fetch" over "browserUse" for reading static content. Use browser only for JS-heavy pages, form interactions, or authenticated sessions.
+- Use "design_generator" when the user wants to create any visual design, landing page, UI, or frontend layout. Even vague prompts produce professional results.
+- ALWAYS run "visual_polish" after generating a design to catch and fix AI slop patterns before showing the user.
+- Use "design_system" to list presets or validate a design against anti-slop rules. Use "validate" action to check if a design looks AI-generated.
+- NEVER produce AI slop: no purple gradients, no glassmorphism, no Inter font, no icon-tile-over-heading cards, no centered hero with 3-card feature grid. When in doubt, run visual_polish.
+- Design philosophy: distinctive over safe, intentional over trendy, specific over generic. Every design choice should serve the brand, not "look good" in a vacuum.
 </tool-calling-guidelines>
 
 <browser-automation-reference>
@@ -2330,6 +2335,9 @@ Below is the user's query. Please respond in the user's preferred language witho
         'webFetch',
         'urlScanner',
         'quickCompute',
+        'designGenerator',
+        'designSystem',
+        'visualPolish',
       ],
     },
   },

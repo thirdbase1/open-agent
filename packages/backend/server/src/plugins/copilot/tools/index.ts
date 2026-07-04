@@ -4,6 +4,7 @@ export * from './firecrawl';
 export * from './web-fetch';
 export * from './url-scanner';
 export * from './quick-compute';
+export * from './design-generator';
 export * from './choose';
 export * from './code-artifact';
 export * from './conversation-summary';
