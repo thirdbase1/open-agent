@@ -115,7 +115,7 @@ export const TokenTrackingContextSchema = z.object({
   requestId: z.string(),
   sessionId: z.string().optional(),
   userId: z.string().optional(),
-  toolChain: z.array(z.string>(),
+  toolChain: z.array(z.string()),
   usageRecords: z.array(TokenUsageDetailSchema),
 });
 
