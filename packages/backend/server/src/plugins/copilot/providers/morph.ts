@@ -15,7 +15,11 @@ import type {
   ModelConditions,
   PromptMessage,
 } from './types';
-import { CopilotProviderType, ModelInputType, ModelOutputType } from './types';
+import {
+  CopilotProviderModel,
+  CopilotProviderType,
+  ModelOutputType,
+} from './types';
 import { chatToGPTMessage, TextStreamParser } from './utils';
 
 export const DEFAULT_DIMENSIONS = 256;
@@ -28,35 +32,29 @@ export type MorphConfig = {
 export class MorphProvider extends CopilotProvider<MorphConfig> {
   readonly type = CopilotProviderType.Morph;
 
-  readonly models = [
-    {
-      id: 'morph/morph-v2',
-      capabilities: [
-        {
-          input: [ModelInputType.Text],
-          output: [ModelOutputType.Text],
-        },
-      ],
-    },
-    {
-      id: 'morph/morph-v3-fast',
-      capabilities: [
-        {
-          input: [ModelInputType.Text],
-          output: [ModelOutputType.Text],
-        },
-      ],
-    },
-    {
-      id: 'morph/morph-v3-large',
-      capabilities: [
-        {
-          input: [ModelInputType.Text],
-          output: [ModelOutputType.Text],
-        },
-      ],
-    },
-  ];
+  // Models fetched dynamically from Vercel AI Gateway
+  private _models: CopilotProviderModel[] = [];
+  override get models(): CopilotProviderModel[] {
+    return this._models;
+  }
+
+  override async refreshOnlineModels() {
+    try {
+      const { gatewayModelService } = await import('./gateway-models');
+      this._models = await gatewayModelService.getModelsForProvider(
+        CopilotProviderType.Morph
+      );
+      this.onlineModelList = this._models.map(m => m.id);
+      if (this._models.length > 0) {
+        this._models[0].capabilities[0].defaultForOutputType = true;
+        this.logger.log(
+          `Loaded ${this._models.length} Morph models from AI Gateway`
+        );
+      }
+    } catch (e) {
+      this.logger.error('Failed to fetch Morph models from AI Gateway', e);
+    }
+  }
 
   #instance!: VercelOpenAICompatibleProvider;
 

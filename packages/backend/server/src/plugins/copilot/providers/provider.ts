@@ -37,6 +37,14 @@ import {
   createMarkTodoTool,
   createTaskAnalysisTool,
   createTodoTool,
+  createImageVisionTool,
+  createVideoGeneratorTool,
+  createTranslatorTool,
+  createCodeReviewerTool,
+  createContentWriterTool,
+  createDataAnalyzerTool,
+  createDocSummarizerTool,
+  createVoiceGeneratorTool,
 } from '../tools';
 import { createPythonCodingTool } from '../tools/python-coding';
 import { CopilotProviderFactory } from './factory';
@@ -324,6 +332,38 @@ export abstract class CopilotProvider<C = any> {
           }
           case 'visualPolish': {
             tools.visual_polish = createVisualPolishTool();
+            break;
+          }
+          case 'imageVision': {
+            tools.image_vision = createImageVisionTool();
+            break;
+          }
+          case 'videoGenerator': {
+            tools.video_generator = createVideoGeneratorTool();
+            break;
+          }
+          case 'translator': {
+            tools.translator = createTranslatorTool();
+            break;
+          }
+          case 'codeReviewer': {
+            tools.code_reviewer = createCodeReviewerTool();
+            break;
+          }
+          case 'contentWriter': {
+            tools.content_writer = createContentWriterTool();
+            break;
+          }
+          case 'dataAnalyzer': {
+            tools.data_analyzer = createDataAnalyzerTool();
+            break;
+          }
+          case 'docSummarizer': {
+            tools.doc_summarizer = createDocSummarizerTool();
+            break;
+          }
+          case 'voiceGenerator': {
+            tools.voice_generator = createVoiceGeneratorTool();
             break;
           }
         }

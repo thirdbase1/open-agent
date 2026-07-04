@@ -349,7 +349,6 @@ export class CopilotType {
   userId!: string;
 }
 
-
 @ObjectType('CopilotModelInfo')
 class CopilotModelInfoType {
   @Field(() => String)
@@ -380,7 +379,8 @@ export class CopilotResolver {
   })
   @CallMetric('ai', 'list_models')
   async listCopilotModels(): Promise<CopilotModelInfoType[]> {
-    return this.providerFactory.listAllModels().map(m => ({
+    const models = await this.providerFactory.listAllModels();
+    return models.map(m => ({
       provider: m.provider,
       modelId: m.modelId,
       inputTypes: m.capabilities.flatMap(c => c.input),

@@ -9,9 +9,9 @@ import { CopilotProviderSideError, metrics } from '../../../base';
 import { CopilotProvider } from './provider';
 import {
   CopilotChatOptions,
+  CopilotProviderModel,
   CopilotProviderType,
   ModelConditions,
-  ModelInputType,
   ModelOutputType,
   PromptMessage,
 } from './types';
@@ -49,49 +49,29 @@ type PerplexityError = z.infer<typeof PerplexityErrorSchema>;
 export class PerplexityProvider extends CopilotProvider<PerplexityConfig> {
   readonly type = CopilotProviderType.Perplexity;
 
-  readonly models = [
-    {
-      name: 'Sonar',
-      id: 'sonar',
-      capabilities: [
-        {
-          input: [ModelInputType.Text],
-          output: [ModelOutputType.Text],
-          defaultForOutputType: true,
-        },
-      ],
-    },
-    {
-      name: 'Sonar Pro',
-      id: 'sonar-pro',
-      capabilities: [
-        {
-          input: [ModelInputType.Text],
-          output: [ModelOutputType.Text],
-        },
-      ],
-    },
-    {
-      name: 'Sonar Reasoning',
-      id: 'sonar-reasoning',
-      capabilities: [
-        {
-          input: [ModelInputType.Text],
-          output: [ModelOutputType.Text],
-        },
-      ],
-    },
-    {
-      name: 'Sonar Reasoning Pro',
-      id: 'sonar-reasoning-pro',
-      capabilities: [
-        {
-          input: [ModelInputType.Text],
-          output: [ModelOutputType.Text],
-        },
-      ],
-    },
-  ];
+  // Models fetched dynamically from Vercel AI Gateway
+  private _models: CopilotProviderModel[] = [];
+  override get models(): CopilotProviderModel[] {
+    return this._models;
+  }
+
+  override async refreshOnlineModels() {
+    try {
+      const { gatewayModelService } = await import('./gateway-models');
+      this._models = await gatewayModelService.getModelsForProvider(
+        CopilotProviderType.Perplexity
+      );
+      this.onlineModelList = this._models.map(m => m.id);
+      if (this._models.length > 0) {
+        this._models[0].capabilities[0].defaultForOutputType = true;
+        this.logger.log(
+          `Loaded ${this._models.length} Perplexity models from AI Gateway`
+        );
+      }
+    } catch (e) {
+      this.logger.error('Failed to fetch Perplexity models from AI Gateway', e);
+    }
+  }
 
   #instance!: VercelPerplexityProvider;
 
@@ -115,7 +95,9 @@ export class PerplexityProvider extends CopilotProvider<PerplexityConfig> {
   }
 
   private getLanguageModel(model: string) {
-    return this.config.useGateway ? `perplexity/${model}` : this.#instance(model);
+    return this.config.useGateway
+      ? `perplexity/${model}`
+      : this.#instance(model);
   }
 
   async text(

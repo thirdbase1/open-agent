@@ -6,9 +6,7 @@ import {
   StorageProviderConfig,
 } from '../../base';
 import { CopilotPromptScenario } from './prompt/prompts';
-import {
-  AnthropicOfficialConfig,
-} from './providers/anthropic';
+import { AnthropicOfficialConfig } from './providers/anthropic';
 import { GeminiGenerativeConfig } from './providers/gemini';
 import { MorphConfig } from './providers/morph';
 import { OpenAIConfig } from './providers/openai';
@@ -45,16 +43,16 @@ defineModuleConfig('copilot', {
     default: {
       override_enabled: false,
       scenarios: {
-        audio_transcribing: 'gemini-2.5-flash',
-        chat: 'claude-sonnet-4@20250514',
+        audio_transcribing: 'google/gemini-2.5-flash',
+        chat: 'anthropic/claude-sonnet-4-5-20250514',
         embedding: 'gemini-embedding-001',
         image: 'gpt-image-1',
-        rerank: 'gpt-4.1',
-        coding: 'claude-sonnet-4@20250514',
-        complex_text_generation: 'gpt-4o-2024-08-06',
-        quick_decision_making: 'gpt-5-mini',
-        quick_text_generation: 'gemini-2.5-flash',
-        polish_and_summarize: 'gemini-2.5-flash',
+        rerank: 'openai/gpt-4.1',
+        coding: 'anthropic/claude-sonnet-4-5-20250514',
+        complex_text_generation: 'openai/gpt-4o',
+        quick_decision_making: 'openai/gpt-5-mini',
+        quick_text_generation: 'google/gemini-2.5-flash',
+        polish_and_summarize: 'google/gemini-2.5-flash',
       },
     },
   },

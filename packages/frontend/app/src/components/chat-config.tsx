@@ -173,6 +173,46 @@ export const configurableTools = [
     icon: <MakeItRealIcon />,
     value: 'visualPolish',
   },
+  {
+    label: 'Image Vision',
+    icon: <MakeItRealIcon />,
+    value: 'imageVision',
+  },
+  {
+    label: 'Video Generator',
+    icon: <MakeItRealIcon />,
+    value: 'videoGenerator',
+  },
+  {
+    label: 'Translator',
+    icon: <WebIcon />,
+    value: 'translator',
+  },
+  {
+    label: 'Code Reviewer',
+    icon: <CodeIcon />,
+    value: 'codeReviewer',
+  },
+  {
+    label: 'Content Writer',
+    icon: <PageIcon />,
+    value: 'contentWriter',
+  },
+  {
+    label: 'Data Analyzer',
+    icon: <CodeIcon />,
+    value: 'dataAnalyzer',
+  },
+  {
+    label: 'Doc Summarizer',
+    icon: <PageIcon />,
+    value: 'docSummarizer',
+  },
+  {
+    label: 'Voice Generator',
+    icon: <WebIcon />,
+    value: 'voiceGenerator',
+  },
 ];
 
 export const defaultTools = [

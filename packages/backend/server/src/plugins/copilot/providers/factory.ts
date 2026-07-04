@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { ServerFeature, ServerService } from '../../../core';
+import { gatewayModelService } from './gateway-models';
 import type { CopilotProvider } from './provider';
 import { CopilotProviderType, ModelFullConditions } from './types';
 
@@ -68,9 +69,33 @@ export class CopilotProviderFactory {
     this.server.enableFeature(ServerFeature.Copilot);
   }
 
+  /**
+   * List all available models from the Vercel AI Gateway.
+   * Models are fetched dynamically from https://ai-gateway.vercel.sh/v1/models
+   * and cached for 5 minutes. No hardcoded model IDs.
+   */
+  async listAllModels(): Promise<
+    Array<{
+      provider: CopilotProviderType;
+      modelId: string;
+      capabilities: Array<{ input: string[]; output: string[] }>;
+    }>
+  > {
+    // Try fetching from the gateway first
+    const gatewayModels = await gatewayModelService.getAllModels();
+    if (gatewayModels.length > 0) {
+      return gatewayModels;
+    }
 
-  listAllModels(): Array<{ provider: CopilotProviderType; modelId: string; capabilities: Array<{ input: string[]; output: string[] }> }> {
-    const models: Array<{ provider: CopilotProviderType; modelId: string; capabilities: Array<{ input: string[]; output: string[] }> }> = [];
+    // Fallback to provider-registered models if gateway is unreachable
+    this.logger.warn(
+      'Gateway models unavailable, falling back to provider models'
+    );
+    const models: Array<{
+      provider: CopilotProviderType;
+      modelId: string;
+      capabilities: Array<{ input: string[]; output: string[] }>;
+    }> = [];
     for (const [type, provider] of this.#providers.entries()) {
       for (const model of provider.models) {
         models.push({

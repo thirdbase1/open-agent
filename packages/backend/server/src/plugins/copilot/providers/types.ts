@@ -55,6 +55,15 @@ export const PromptTools = z
     'designSystem',
     // visual polish and anti-slop checker
     'visualPolish',
+    // 8 new out-of-the-box features
+    'imageVision',
+    'videoGenerator',
+    'translator',
+    'codeReviewer',
+    'contentWriter',
+    'dataAnalyzer',
+    'docSummarizer',
+    'voiceGenerator',
   ])
   .array();
 
