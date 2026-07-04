@@ -1,15 +1,4 @@
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-export default require('./server-native.node');
-export const {
-  parseDoc,
-  getMime,
-  verifyChallengeResponse,
-  mintChallengeResponse,
-  htmlSanitize,
-  fromModelName,
-  Tokenizer,
-  AsyncVerifyChallengeResponse,
-  AsyncMintChallengeResponse,
-  AsyncParseDocResponse,
-} = require('./server-native.node');
+'use strict';
+const native = require('./server-native.node');
+module.exports = native;
+module.exports.default = native;
