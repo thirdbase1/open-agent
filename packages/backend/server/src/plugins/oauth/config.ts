@@ -23,7 +23,6 @@ export interface OAuthOIDCProviderConfig extends OAuthProviderConfig {
 export enum OAuthProviderName {
   Google = 'google',
   GitHub = 'github',
-  Apple = 'apple',
   OIDC = 'oidc',
 }
 
@@ -45,11 +44,6 @@ declare global {
           args: ConfigItem<Record<string, string>>;
         };
         [OAuthProviderName.GitHub]: {
-          clientId: string;
-          clientSecret: string;
-          args: ConfigItem<Record<string, string>>;
-        };
-        [OAuthProviderName.Apple]: {
           clientId: string;
           clientSecret: string;
           args: ConfigItem<Record<string, string>>;
@@ -96,24 +90,6 @@ defineModuleConfig('oauth', {
     env: 'OAUTH_GITHUB_CLIENT_SECRET',
   },
   'providers.github.args': genericArgsDescriptor,
-  'providers.apple.clientId': {
-    desc: 'Apple OAuth client id.',
-    default: '',
-    env: 'OAUTH_APPLE_CLIENT_ID',
-    link: 'https://developer.apple.com/documentation/sign_in_with_apple/sign_in_with_apple_js/implementing_sign_in_with_apple_in_your_app',
-  },
-  'providers.apple.clientSecret': {
-    desc: 'Apple OAuth client secret.',
-    default: '',
-    env: 'OAUTH_APPLE_CLIENT_SECRET',
-  },
-  'providers.apple.args': genericArgsDescriptor,
-  'providers.oidc.clientId': {
-    desc: 'OIDC OAuth client id.',
-    default: '',
-    env: 'OAUTH_OIDC_CLIENT_ID',
-    link: 'https://openid.net/specs/openid-connect-core-1_0.html',
-  },
   'providers.oidc.clientSecret': {
     desc: 'OIDC OAuth client secret.',
     default: '',

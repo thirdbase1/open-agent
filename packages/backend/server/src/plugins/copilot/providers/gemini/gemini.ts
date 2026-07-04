@@ -2,7 +2,6 @@ import type {
   GoogleGenerativeAIProvider,
   GoogleGenerativeAIProviderOptions,
 } from '@ai-sdk/google';
-import type { GoogleVertexProvider } from '@ai-sdk/google-vertex';
 import {
   AISDKError,
   embedMany,
@@ -45,9 +44,7 @@ export type GeminiConfig = {
 };
 
 export abstract class GeminiProvider<T> extends CopilotProvider<T> {
-  protected abstract instance:
-    | GoogleGenerativeAIProvider
-    | GoogleVertexProvider;
+  protected abstract instance: GoogleGenerativeAIProvider;
 
   protected isGatewayEnabled() {
     return false;

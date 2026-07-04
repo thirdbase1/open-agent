@@ -21,7 +21,6 @@ declare global {
       parallel: { key: string };
       firecrawl: { key: string };
       agentBrowser: { command: string };
-      e2b: { key: string };
       storage: ConfigItem<StorageProviderConfig>;
       scenarios: ConfigItem<CopilotPromptScenario>;
       providers: {
@@ -144,11 +143,6 @@ defineModuleConfig('copilot', {
     desc: 'Command to invoke agent-browser CLI.',
     default: 'npx -y agent-browser',
     env: 'AGENT_BROWSER_COMMAND',
-  },
-  'e2b.key': {
-    desc: 'API key for the E2B sandbox tool.',
-    default: '',
-    env: 'E2B_API_KEY',
   },
   storage: {
     desc: 'The config for the storage provider.',

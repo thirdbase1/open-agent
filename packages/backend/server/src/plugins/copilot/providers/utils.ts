@@ -1,5 +1,3 @@
-import { GoogleVertexProviderSettings } from '@ai-sdk/google-vertex';
-import { GoogleVertexAnthropicProviderSettings } from '@ai-sdk/google-vertex/anthropic';
 import { Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
@@ -866,55 +864,4 @@ export class StreamObjectParser extends BaseStreamParser<StreamObject> {
     this.lastSummary = statusObject;
     return statusObject;
   }
-}
-
-export const VertexModelListSchema = z.object({
-  publisherModels: z.array(
-    z.object({
-      name: z.string(),
-      versionId: z.string(),
-    })
-  ),
-});
-
-export async function getGoogleAuth(
-  options: GoogleVertexAnthropicProviderSettings | GoogleVertexProviderSettings,
-  publisher: 'anthropic' | 'google'
-) {
-  function getBaseUrl() {
-    const { baseURL, location } = options;
-    if (baseURL?.trim()) {
-      try {
-        const url = new URL(baseURL);
-        if (url.pathname.endsWith('/')) {
-          url.pathname = url.pathname.slice(0, -1);
-        }
-        return url.toString();
-      } catch {}
-    } else if (location) {
-      return `https://${location}-aiplatform.googleapis.com/v1beta1/publishers/${publisher}`;
-    }
-    return undefined;
-  }
-
-  async function generateAuthToken() {
-    if (!options.googleAuthOptions) {
-      return undefined;
-    }
-    const auth = new GoogleAuth({
-      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-      ...(options.googleAuthOptions as GoogleAuthOptions),
-    });
-    const client = await auth.getClient();
-    const token = await client.getAccessToken();
-    return token.token;
-  }
-
-  const token = await generateAuthToken();
-
-  return {
-    baseUrl: getBaseUrl(),
-    headers: token ? () => ({ Authorization: `Bearer ${token}` }) : undefined,
-    fetch: options.fetch,
-  };
 }

@@ -2,7 +2,6 @@ import {
   type AnthropicProvider as AnthropicSDKProvider,
   type AnthropicProviderOptions,
 } from '@ai-sdk/anthropic';
-import { type GoogleVertexAnthropicProvider } from '@ai-sdk/google-vertex/anthropic';
 import { AISDKError, generateText, isStepCount, streamText } from 'ai';
 
 import {
@@ -28,9 +27,7 @@ import {
 } from '../utils';
 
 export abstract class AnthropicProvider<T> extends CopilotProvider<T> {
-  protected abstract instance:
-    | AnthropicSDKProvider
-    | GoogleVertexAnthropicProvider;
+  protected abstract instance: AnthropicSDKProvider;
 
   protected isGatewayEnabled() {
     return false;

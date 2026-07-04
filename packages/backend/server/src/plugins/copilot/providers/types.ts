@@ -1,101 +1,19 @@
 import { AiPromptRole } from '@prisma/client';
 import { z } from 'zod';
 
-import { JSONSchema } from '../../../base';
-
 // ========== provider ==========
 
 export enum CopilotProviderType {
   Anthropic = 'anthropic',
-  AnthropicVertex = 'anthropicVertex',
-  FAL = 'fal',
   Gemini = 'gemini',
-  GeminiVertex = 'geminiVertex',
   OpenAI = 'openai',
   Perplexity = 'perplexity',
   Morph = 'morph',
-  Oracle = 'oracle',
 }
 
 export const CopilotProviderSchema = z.object({
   type: z.nativeEnum(CopilotProviderType),
 });
-
-export const VertexSchema: JSONSchema = {
-  type: 'object',
-  description: 'The config for the google vertex provider.',
-  properties: {
-    location: {
-      type: 'string',
-      description: 'The location of the google vertex provider.',
-    },
-    project: {
-      type: 'string',
-      description: 'The project name of the google vertex provider.',
-    },
-    googleAuthOptions: {
-      type: 'object',
-      description: 'The google auth options for the google vertex provider.',
-      properties: {
-        credentials: {
-          type: 'object',
-          description: 'The credentials for the google vertex provider.',
-          properties: {
-            client_email: {
-              type: 'string',
-              description: 'The client email for the google vertex provider.',
-            },
-            private_key: {
-              type: 'string',
-              description: 'The private key for the google vertex provider.',
-            },
-          },
-        },
-      },
-    },
-  },
-};
-
-export const OracleSchema: JSONSchema = {
-  type: 'object',
-  description: 'The config for the oracle provider.',
-  properties: {
-    endpoint: {
-      type: 'string',
-      description: 'The endpoint of the oracle provider.',
-    },
-    compartmentId: {
-      type: 'string',
-      description: 'The compartment ID of the oracle provider.',
-    },
-    config: {
-      type: 'object',
-      description: 'The config for the oracle provider.',
-      properties: {
-        user: {
-          type: 'string',
-          description: 'The user OCID for the oracle provider.',
-        },
-        fingerprint: {
-          type: 'string',
-          description: 'The fingerprint for the oracle provider.',
-        },
-        tenancy: {
-          type: 'string',
-          description: 'The tenancy OCID for the oracle provider.',
-        },
-        region: {
-          type: 'string',
-          description: 'The region for the oracle provider.',
-        },
-      },
-    },
-    privateKey: {
-      type: 'string',
-      description: 'The private key for the oracle provider.',
-    },
-  },
-};
 
 // ========== prompt ==========
 
@@ -117,10 +35,8 @@ export const PromptTools = z
     'docSemanticSearch',
     'todoList',
     'markTodo',
-    // work with exa/model internal tools
+    // web search via parallel + firecrawl
     'webSearch',
-    // artifact tools
-    'docCompose',
     // make it real
     'makeItReal',
     // python coding
@@ -143,14 +59,6 @@ export const PromptConfigStrictSchema = z.object({
   temperature: z.number().nullable().optional(),
   topP: z.number().nullable().optional(),
   maxTokens: z.number().nullable().optional(),
-  // fal
-  modelName: z.string().nullable().optional(),
-  loras: z
-    .array(
-      z.object({ path: z.string(), scale: z.number().nullable().optional() })
-    )
-    .nullable()
-    .optional(),
   // google
   audioTimestamp: z.boolean().nullable().optional(),
 });
@@ -196,7 +104,7 @@ export const TokenUsageTotalSchema = TokenUsageSchema.extend({
 });
 
 export const TokenUsageDetailSchema = z.object({
-  step: z.string(), // 'main_request' | 'tool_call:xxx' | 'sub_tool_call:xxx'
+  step: z.string(),
   model: z.string(),
   usage: TokenUsageSchema.optional(),
   duration: z.number(),
@@ -207,7 +115,7 @@ export const TokenTrackingContextSchema = z.object({
   requestId: z.string(),
   sessionId: z.string().optional(),
   userId: z.string().optional(),
-  toolChain: z.array(z.string()),
+  toolChain: z.array(z.string>(),
   usageRecords: z.array(TokenUsageDetailSchema),
 });
 
@@ -258,7 +166,7 @@ const StreamObjectPureSchema = [
       completed: z.boolean(),
       summary: TokenSummarySchema.optional(),
       tokenUsage: TokenUsageTotalSchema.optional(),
-      records: TokenUsageDetailSchema.array().optional(),
+      records: z.array(TokenUsageDetailSchema).optional(),
     }),
   }),
 ] as const;

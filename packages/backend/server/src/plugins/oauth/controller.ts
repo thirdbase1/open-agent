@@ -84,7 +84,6 @@ export class OAuthController {
   }
 
   // the prerequest `/oauth/prelight` request already checked client version,
-  // let's simply ignore it for callback which will block apple oauth post_form mode
   // @UseNamedGuard('version')
   @Public()
   @Post('/callback')
@@ -105,7 +104,6 @@ export class OAuthController {
       throw new MissingOauthQueryParameter({ name: 'state' });
     }
 
-    // NOTE(@forehalo): Apple sign in will directly post /callback, with `state` set at #L73
     let rawState = null;
     if (typeof stateStr === 'string' && stateStr.length > 36) {
       try {
@@ -126,37 +124,10 @@ export class OAuthController {
       throw new OauthStateExpired();
     }
 
-    if (
-      state.provider === OAuthProviderName.Apple &&
-      rawState &&
-      state.client &&
-      state.client !== 'web'
-    ) {
-      const clientUrl = new URL(`${state.client}://authentication`);
-      clientUrl.searchParams.set('method', 'oauth');
-      clientUrl.searchParams.set(
-        'payload',
-        JSON.stringify({
-          state: stateStr,
-          code,
-          provider: rawState.provider,
-        })
-      );
-      clientUrl.searchParams.set('server', this.url.requestOrigin);
-
-      return res.redirect(
-        this.url.link('/open-app/url?', {
-          url: clientUrl.toString(),
-        })
-      );
-    }
-
     // TODO(@fengmk2): clientNonce should be required after the client version >= 0.21.0
     if (
       state.clientNonce &&
-      state.clientNonce !== clientNonce &&
-      // apple sign in with nonce stored in id token
-      state.provider !== OAuthProviderName.Apple
+      state.clientNonce !== clientNonce
     ) {
       throw new InvalidAuthState();
     }
@@ -194,13 +165,6 @@ export class OAuthController {
     );
 
     await this.auth.setCookies(req, res, user.id);
-
-    if (
-      state.provider === OAuthProviderName.Apple &&
-      (!state.client || state.client === 'web')
-    ) {
-      return res.redirect(this.url.link(state.redirectUri ?? '/'));
-    }
 
     res.send({
       id: user.id,
