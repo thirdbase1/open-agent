@@ -1,0 +1,5 @@
+# Rust/napi build artifacts
+native/
+target/
+*.node
+!index.js
