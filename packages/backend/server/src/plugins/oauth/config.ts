@@ -90,6 +90,11 @@ defineModuleConfig('oauth', {
     env: 'OAUTH_GITHUB_CLIENT_SECRET',
   },
   'providers.github.args': genericArgsDescriptor,
+  'providers.oidc.clientId': {
+    desc: 'OIDC OAuth client id.',
+    default: '',
+    env: 'OAUTH_OIDC_CLIENT_ID',
+  },
   'providers.oidc.clientSecret': {
     desc: 'OIDC OAuth client secret.',
     default: '',

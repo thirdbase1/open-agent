@@ -334,3 +334,63 @@ OAUTH_OIDC_CLIENT_ID=...
 OAUTH_OIDC_CLIENT_SECRET=...
 OAUTH_OIDC_ISSUER=...
 ```
+
+## 9. Complete env var reference — .env.vercel
+
+The file `packages/backend/server/.env.vercel` contains every single env var
+the application reads, organized by category, with inline comments explaining
+each one. It was produced by a full codebase audit of every config.ts, every
+process.env reference, and every env: binding in the NestJS config system.
+
+### Quick reference — all env vars (full details in .env.vercel)
+
+**[REQUIRED for first deploy]**
+1. DATABASE_URL — Aurora PostgreSQL connection string
+2. DIRECT_URL — Same as DATABASE_URL (Aurora has no pooler)
+3. REDIS_URL — Upstash Redis URL (rediss://), also auto-detects UPSTASH_REDIS_URL, KV_URL
+4. AWS_S3_ACCESS_KEY_ID — S3 storage access key
+5. AWS_S3_SECRET_ACCESS_KEY — S3 storage secret key
+6. AWS_S3_BUCKET — S3 bucket name
+7. AWS_S3_REGION — S3 bucket region
+8. OPEN_AGENT_PRIVATE_KEY — Session signing key (openssl rand -base64 32)
+
+**[VERCEL-AUTO — injected at runtime, don't set manually]**
+- PORT — Vercel injects, Dockerfile maps to OPEN_AGENT_SERVER_PORT
+- VERCEL_OIDC_TOKEN — Used for AI Gateway auth automatically
+- NODE_ENV — Set to production by Vercel
+
+**[OPTIONAL — AI providers, direct API keys (gateway is default) ]**
+- AI_GATEWAY_API_KEY — Only needed outside Vercel
+- OPENAI_API_KEY — Direct OpenAI (fallback when gateway is off)
+- ANTHROPIC_API_KEY — Direct Anthropic
+- GOOGLE_GENERATIVE_AI_API_KEY — Direct Google Gemini
+- PERPLEXITY_API_KEY — Direct Perplexity
+- MORPH_API_KEY — Direct Morph
+
+**[OPTIONAL — Copilot tools]**
+- UNSPLASH_ACCESS_KEY — Image search
+- PARALLEL_API_KEY — Web search & extract
+- FIRECRAWL_API_KEY — Web crawling
+- AGENT_BROWSER_COMMAND — Browser automation CLI
+
+**[OPTIONAL — OAuth social login]**
+- OAUTH_GOOGLE_CLIENT_ID / OAUTH_GOOGLE_CLIENT_SECRET
+- OAUTH_GITHUB_CLIENT_ID / OAUTH_GITHUB_CLIENT_SECRET
+- OAUTH_OIDC_CLIENT_ID / OAUTH_OIDC_CLIENT_SECRET / OAUTH_OIDC_ISSUER
+
+**[OPTIONAL — Email SMTP]**
+- MAILER_HOST / MAILER_PORT / MAILER_USER / MAILER_PASSWORD / MAILER_SENDER / MAILER_IGNORE_TLS
+
+**[OPTIONAL — Server config, usually auto-detected]**
+- OPEN_AGENT_SERVER_EXTERNAL_URL / OPEN_AGENT_SERVER_HOST
+- OPEN_AGENT_SERVER_HTTPS / OPEN_AGENT_SERVER_PORT / OPEN_AGENT_SERVER_SUB_PATH
+
+**[OPTIONAL — Runtime env, defaults are correct for Vercel]**
+- OPEN_AGENT_ENV / SERVER_FLAVOR / DEPLOYMENT_TYPE / DEPLOYMENT_PLATFORM
+
+**[Alternative storage — Cloudflare R2 instead of S3]**
+- R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_BUCKET
+
+**[Alternative Redis — discrete fields instead of URL]**
+- REDIS_SERVER_HOST / REDIS_SERVER_PORT / REDIS_SERVER_DATABASE
+- REDIS_SERVER_USERNAME / REDIS_SERVER_PASSWORD / REDIS_ENABLE_TLS
