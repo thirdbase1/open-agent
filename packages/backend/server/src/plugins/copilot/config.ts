@@ -18,6 +18,7 @@ declare global {
     copilot: {
       enabled: boolean;
       unsplash: { key: string };
+      pexels: { key: string };
       parallel: { key: string };
       firecrawl: { key: string };
       agentBrowser: { command: string };
@@ -128,6 +129,11 @@ defineModuleConfig('copilot', {
     desc: 'API key for Unsplash image search.',
     default: '',
     env: 'UNSPLASH_ACCESS_KEY',
+  },
+  'pexels.key': {
+    desc: 'API key for Pexels image search.',
+    default: '',
+    env: 'PEXELS_API_KEY',
   },
   'parallel.key': {
     desc: 'API key for Parallel web search and extract.',

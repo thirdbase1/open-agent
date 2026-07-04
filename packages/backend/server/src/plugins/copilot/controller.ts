@@ -743,34 +743,72 @@ export class CopilotController implements BeforeApplicationShutdown {
   }
 
   @Get('/unsplash/photos')
-  @CallMetric('ai', 'unsplash')
-  async unsplashPhotos(
+  @Get('/pexels/photos')
+  @Get('/images/photos')
+  @CallMetric('ai', 'pexels')
+  async imageSearchPhotos(
     @Req() req: Request,
     @Res() res: Response,
     @Query() params: Record<string, string>
   ) {
-    const { key } = this.config.copilot.unsplash;
+    const key = this.config.copilot.pexels.key || this.config.copilot.unsplash.key;
     if (!key) {
       throw new UnsplashIsNotConfigured();
     }
 
     const query = new URLSearchParams(params);
-    const response = await fetch(
-      `https://api.unsplash.com/search/photos?${query}`,
-      {
-        headers: { Authorization: `Client-ID ${key}` },
-        signal: getSignal(req).signal,
-      }
-    );
-
-    res.set({
-      'Content-Type': response.headers.get('Content-Type'),
-      'Content-Length': response.headers.get('Content-Length'),
-      'X-Ratelimit-Limit': response.headers.get('X-Ratelimit-Limit'),
-      'X-Ratelimit-Remaining': response.headers.get('X-Ratelimit-Remaining'),
+    const response = await fetch(`https://api.pexels.com/v1/search?${query}`, {
+      headers: { Authorization: key },
+      signal: getSignal(req).signal,
     });
 
-    res.status(response.status).send(await response.json());
+    const contentType = response.headers.get('Content-Type');
+    if (contentType) {
+      res.set({ 'Content-Type': contentType });
+    }
+    for (const header of ['X-Ratelimit-Limit', 'X-Ratelimit-Remaining']) {
+      const value = response.headers.get(header);
+      if (value) res.set(header, value);
+    }
+
+    const payload = await response.json();
+    if (!response.ok || !Array.isArray(payload.photos)) {
+      res.status(response.status).send(payload);
+      return;
+    }
+
+    const total = payload.total_results ?? payload.total ?? payload.photos.length;
+    const perPage = Number(payload.per_page || query.get('per_page') || 15);
+    res.status(response.status).send({
+      total,
+      total_pages: Math.ceil(total / perPage),
+      results: payload.photos.map((photo: any) => ({
+        id: String(photo.id),
+        width: photo.width,
+        height: photo.height,
+        color: photo.avg_color,
+        description: photo.alt,
+        alt_description: photo.alt,
+        urls: {
+          raw: photo.src?.original,
+          full: photo.src?.large2x || photo.src?.original,
+          regular: photo.src?.large,
+          small: photo.src?.medium || photo.src?.small,
+          thumb: photo.src?.tiny,
+        },
+        links: {
+          html: photo.url,
+          download: photo.src?.original,
+          download_location: photo.src?.original,
+        },
+        user: {
+          name: photo.photographer,
+          links: { html: photo.photographer_url },
+        },
+        pexels: photo,
+      })),
+      pexels: payload,
+    });
   }
 
   @Public()

@@ -491,7 +491,7 @@ export async function unsplashSearch(
   params: Record<string, string> = {}
 ) {
   const query = new URLSearchParams(params);
-  const res = await app.GET(`/api/copilot/unsplash/photos?${query}`);
+  const res = await app.GET(`/api/copilot/images/photos?${query}`);
   return res;
 }
 

@@ -448,7 +448,7 @@ export const USER_FRIENDLY_ERRORS = {
   },
   unsplash_is_not_configured: {
     type: 'internal_server_error',
-    message: `Unsplash is not configured.`,
+    message: `Image search is not configured.`,
   },
   copilot_action_taken: {
     type: 'action_forbidden',
