@@ -57,7 +57,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       // Password login (renamed from login)
-      ,signInPassword: async (email: string, password: string) => {
+      signInPassword: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
         try {
           const response = await fetch('/api/auth/sign-in', {
