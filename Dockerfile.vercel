@@ -1,7 +1,4 @@
 # ─── Stage 1: Rust builder for native module ───────────────────────────
-# Uses node:22-bookworm-slim as a sidecar to provide Node.js without
-# running the nodesource setup script (which generates 3+ apt warnings,
-# 2 debconf warnings, and 2 "packages can be upgraded" messages).
 FROM rust:1.88.0-bookworm AS rust-builder
 
 WORKDIR /app
@@ -11,13 +8,12 @@ ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH}
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Copy Node.js + corepack + npm from the official image — no apt warnings,
-# no debconf, no "packages can be upgraded" noise.
-COPY --from=node:22-bookworm-slim /usr/local/bin/ /usr/local/bin/
-COPY --from=node:22-bookworm-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
-
-# Enable yarn via corepack (ships with Node.js)
-RUN corepack enable yarn
+# Install Node.js via nodesource — this properly sets up node, npm,
+# npx, and corepack with correct symlinks. (COPY from node image
+# breaks symlinks under buildah.)
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | sh - && \
+    apt-get install -y nodejs && \
+    corepack enable yarn
 
 RUN case "${TARGETARCH}" in \
     amd64) NATIVE_FILE="server-native.x64.node" ;; \
@@ -77,10 +73,6 @@ COPY --from=builder /app/packages/frontend/app/dist ./static
 FROM node:22-bookworm-slim AS production
 
 ENV DEBIAN_FRONTEND=noninteractive
-# Install apt-utils first to prevent "debconf: delaying package
-# configuration" warning.  stderr from apt-get update is suppressed
-# to eliminate the "apt does not have a stable CLI interface" and
-# "N packages can be upgraded" messages.
 RUN (apt-get update 2>/dev/null || true) && \
     apt-get install -y --no-install-recommends apt-utils 2>/dev/null && \
     apt-get install -y --no-install-recommends \
