@@ -22,6 +22,7 @@ export const DEFAULT_DIMENSIONS = 256;
 
 export type MorphConfig = {
   apiKey?: string;
+  useGateway?: boolean;
 };
 
 export class MorphProvider extends CopilotProvider<MorphConfig> {
@@ -29,7 +30,7 @@ export class MorphProvider extends CopilotProvider<MorphConfig> {
 
   readonly models = [
     {
-      id: 'morph-v2',
+      id: 'morph/morph-v2',
       capabilities: [
         {
           input: [ModelInputType.Text],
@@ -38,7 +39,7 @@ export class MorphProvider extends CopilotProvider<MorphConfig> {
       ],
     },
     {
-      id: 'morph-v3-fast',
+      id: 'morph/morph-v3-fast',
       capabilities: [
         {
           input: [ModelInputType.Text],
@@ -47,7 +48,7 @@ export class MorphProvider extends CopilotProvider<MorphConfig> {
       ],
     },
     {
-      id: 'morph-v3-large',
+      id: 'morph/morph-v3-large',
       capabilities: [
         {
           input: [ModelInputType.Text],
@@ -60,7 +61,7 @@ export class MorphProvider extends CopilotProvider<MorphConfig> {
   #instance!: VercelOpenAICompatibleProvider;
 
   override configured(): boolean {
-    return !!this.config.apiKey;
+    return !!this.config.useGateway || !!this.config.apiKey;
   }
 
   protected override setup() {
@@ -68,7 +69,9 @@ export class MorphProvider extends CopilotProvider<MorphConfig> {
     this.#instance = createOpenAICompatible({
       name: this.type,
       apiKey: this.config.apiKey,
-      baseURL: 'https://api.morphllm.com/v1',
+      baseURL: this.config.useGateway
+        ? 'https://ai-gateway.vercel.sh/v1'
+        : 'https://api.morphllm.com/v1',
     });
   }
 
@@ -107,7 +110,9 @@ export class MorphProvider extends CopilotProvider<MorphConfig> {
 
       const [system, msgs] = await chatToGPTMessage(messages);
 
-      const modelInstance = this.#instance(model.id);
+      const modelInstance = this.config.useGateway
+        ? model.id
+        : this.#instance(model.id.replace(/^morph\//, ''));
 
       const { text } = await generateText({
         model: modelInstance,
@@ -139,7 +144,9 @@ export class MorphProvider extends CopilotProvider<MorphConfig> {
       metrics.ai.counter('chat_text_stream_calls').add(1, { model: model.id });
       const [system, msgs] = await chatToGPTMessage(messages);
 
-      const modelInstance = this.#instance(model.id);
+      const modelInstance = this.config.useGateway
+        ? model.id
+        : this.#instance(model.id.replace(/^morph\//, ''));
 
       const { stream } = streamText({
         model: modelInstance,

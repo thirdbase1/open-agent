@@ -8,47 +8,28 @@ import {
 import { CopilotPromptScenario } from './prompt/prompts';
 import {
   AnthropicOfficialConfig,
-  AnthropicVertexConfig,
 } from './providers/anthropic';
-import type { FalConfig } from './providers/fal';
-import { GeminiGenerativeConfig, GeminiVertexConfig } from './providers/gemini';
+import { GeminiGenerativeConfig } from './providers/gemini';
 import { MorphConfig } from './providers/morph';
 import { OpenAIConfig } from './providers/openai';
-import { OracleConfig } from './providers/oracle';
 import { PerplexityConfig } from './providers/perplexity';
-import { OracleSchema, VertexSchema } from './providers/types';
 declare global {
   interface AppConfigSchema {
     copilot: {
       enabled: boolean;
       unsplash: { key: string };
-      exa: { key: string };
-      cloudsway: {
-        basePath: string;
-        readEndpoint: string;
-        searchEndpoint: string;
-        accessKey: string;
-      };
+      parallel: { key: string };
+      firecrawl: { key: string };
+      agentBrowser: { command: string };
       e2b: { key: string };
-      browserUse: { key: string };
       storage: ConfigItem<StorageProviderConfig>;
       scenarios: ConfigItem<CopilotPromptScenario>;
-      // openai/fal/gemini/perplexity/anthropic/morph are plain nested
-      // objects (not `ConfigItem<T>`) so each field is its own leaf config
-      // path and apiKey can carry an `env` binding — same pattern as
-      // mailer's `SMTP.host`. geminiVertex/anthropicVertex/oracle use GCP
-      // service-account/OCI credentials rather than a single api key, left
-      // as opaque ConfigItem objects (unchanged, out of scope here).
       providers: {
         openai: OpenAIConfig;
-        fal: FalConfig;
         gemini: GeminiGenerativeConfig;
-        geminiVertex: ConfigItem<GeminiVertexConfig>;
         perplexity: PerplexityConfig;
         anthropic: AnthropicOfficialConfig;
-        anthropicVertex: ConfigItem<AnthropicVertexConfig>;
         morph: MorphConfig;
-        oracle: ConfigItem<OracleConfig>;
       };
     };
   }
@@ -95,11 +76,6 @@ defineModuleConfig('copilot', {
     desc: 'Whether to route openai calls through Vercel AI Gateway.',
     default: true,
   },
-  'providers.fal.apiKey': {
-    desc: 'API key for the fal provider.',
-    default: '',
-    env: 'FAL_API_KEY',
-  },
   'providers.gemini.apiKey': {
     desc: 'API key for the gemini provider.',
     default: '',
@@ -112,11 +88,6 @@ defineModuleConfig('copilot', {
   'providers.gemini.useGateway': {
     desc: 'Whether to route gemini calls through Vercel AI Gateway.',
     default: true,
-  },
-  'providers.geminiVertex': {
-    desc: 'The config for the gemini provider in Google Vertex AI.',
-    default: {},
-    schema: VertexSchema,
   },
   'providers.perplexity.apiKey': {
     desc: 'API key for the perplexity provider.',
@@ -145,54 +116,34 @@ defineModuleConfig('copilot', {
     desc: 'Whether to route anthropic calls through Vercel AI Gateway.',
     default: true,
   },
-  'providers.anthropicVertex': {
-    desc: 'The config for the anthropic provider in Google Vertex AI.',
-    default: {},
-    schema: VertexSchema,
-  },
   'providers.morph.apiKey': {
-    desc: 'API key for the morph provider.',
+    desc: 'API key for the morph provider (not needed when useGateway=true).',
     default: '',
     env: 'MORPH_API_KEY',
   },
-  'providers.oracle': {
-    desc: 'The config for the oracle provider.',
-    default: {},
-    schema: OracleSchema,
+  'providers.morph.useGateway': {
+    desc: 'Whether to route morph calls through Vercel AI Gateway.',
+    default: true,
   },
   'unsplash.key': {
     desc: 'API key for Unsplash image search.',
     default: '',
     env: 'UNSPLASH_ACCESS_KEY',
   },
-  'exa.key': {
-    desc: 'API key for Exa web search.',
+  'parallel.key': {
+    desc: 'API key for Parallel web search and extract.',
     default: '',
-    env: 'EXA_API_KEY',
+    env: 'PARALLEL_API_KEY',
   },
-  'cloudsway.basePath': {
-    desc: 'Base path for the Cloudsway web search and reader API.',
-    default: 'https://searchapi.cloudsway.net',
-  },
-  'cloudsway.readEndpoint': {
-    desc: 'Read endpoint for Cloudsway.',
+  'firecrawl.key': {
+    desc: 'API key for Firecrawl crawling and extraction.',
     default: '',
-    env: 'CLOUDSWAY_READ_ENDPOINT',
+    env: 'FIRECRAWL_API_KEY',
   },
-  'cloudsway.searchEndpoint': {
-    desc: 'Search endpoint for Cloudsway.',
-    default: '',
-    env: 'CLOUDSWAY_SEARCH_ENDPOINT',
-  },
-  'cloudsway.accessKey': {
-    desc: 'Access key for Cloudsway.',
-    default: '',
-    env: 'CLOUDSWAY_ACCESS_KEY',
-  },
-  'browserUse.key': {
-    desc: 'API key for browser-use.com (used by the browser-use agent tool).',
-    default: '',
-    env: 'BROWSER_USE_API_KEY',
+  'agentBrowser.command': {
+    desc: 'Command to invoke agent-browser CLI.',
+    default: 'npx -y agent-browser',
+    env: 'AGENT_BROWSER_COMMAND',
   },
   'e2b.key': {
     desc: 'API key for the E2B sandbox tool.',

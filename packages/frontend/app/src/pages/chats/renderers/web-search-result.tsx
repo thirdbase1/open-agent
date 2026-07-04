@@ -5,7 +5,7 @@ import { GenericToolResult } from './generic-tool-result';
 import { toolResult } from './tool.css';
 
 interface WebSearchResultProps {
-  /** The search results from web_search_cloudsway / web_search_exa tool */
+  /** The search results from web_search_parallel / web_extract_parallel / web_crawl_firecrawl tool */
   results: any[];
   /** Query that was searched */
   query?: string;
@@ -120,7 +120,7 @@ export const useWebResult = (results: any[]) => {
 };
 
 /**
- * Specialized UI component for displaying web_search_cloudsway / web_search_exa tool results.
+ * Specialized UI component for displaying web_search_parallel / web_extract_parallel / web_crawl_firecrawl tool results.
  * Shows a collapsible card with search completion status and expandable results list.
  */
 export function WebSearchResult({ results }: WebSearchResultProps) {

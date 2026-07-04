@@ -87,7 +87,7 @@ export function ChatContentStreamObjects({
             }
             // Specialized handling for web_search placeholder
             if (
-              ['web_search_cloudsway', 'web_search_exa'].includes(
+              ['web_search_parallel'].includes(
                 obj.toolName ?? ''
               )
             ) {
@@ -117,7 +117,7 @@ export function ChatContentStreamObjects({
             }
 
             if (
-              ['web_crawl_cloudsway', 'web_crawl_exa'].includes(
+              ['web_extract_parallel', 'web_crawl_firecrawl'].includes(
                 obj.toolName ?? ''
               )
             ) {
@@ -131,7 +131,7 @@ export function ChatContentStreamObjects({
               );
             }
 
-            if (obj.toolName === 'browser_use' && obj.textDelta) {
+            if (obj.toolName === 'agent_browser' && obj.textDelta) {
               const result = transformStep(obj.textDelta as any);
               if (result) {
                 return <BrowserUseResult key={key} result={result} />;
@@ -194,7 +194,7 @@ export function ChatContentStreamObjects({
 
             // Special handling for web_search/web_crawl tool
             if (
-              ['web_search_cloudsway', 'web_search_exa'].includes(
+              ['web_search_parallel'].includes(
                 obj.toolName ?? ''
               ) &&
               obj.result
@@ -210,7 +210,7 @@ export function ChatContentStreamObjects({
               );
             }
             if (
-              ['web_crawl_cloudsway', 'web_crawl_exa'].includes(
+              ['web_extract_parallel', 'web_crawl_firecrawl'].includes(
                 obj.toolName ?? ''
               ) &&
               obj.result
@@ -247,7 +247,7 @@ export function ChatContentStreamObjects({
               );
             }
 
-            if (obj.toolName === 'browser_use' && obj.result) {
+            if (obj.toolName === 'agent_browser' && obj.result) {
               if (obj.result && typeof obj.result === 'object') {
                 return (
                   <BrowserUseResult key={key} result={obj.result as any} />
@@ -258,7 +258,7 @@ export function ChatContentStreamObjects({
                   key={key}
                   status="loading"
                   className="my-5"
-                  title="Browser task processing..."
+                  title="Agent browser task processing..."
                 />
               );
             }

@@ -526,14 +526,16 @@ export class TextStreamParser extends BaseStreamParser<string> {
             result += `\nSummarizing context\n`;
             break;
           }
-          case 'web_search_cloudsway':
-          case 'web_search_exa': {
-            result += `\nSearching the web "${chunk.input.query}"\n`;
+          case 'web_search_parallel': {
+            result += `\nSearching the web "${chunk.input.objective}"\n`;
             break;
           }
-          case 'web_crawl_cloudsway':
-          case 'web_crawl_exa': {
-            result += `\nCrawling the web "${chunk.input.url}"\n`;
+          case 'web_extract_parallel': {
+            result += `\nExtracting from "${chunk.input.urls?.join(',')}"\n`
+            break;
+          }
+          case 'web_crawl_firecrawl': {
+            result += `\nCrawling "${chunk.input.url}"\n`;
             break;
           }
           case 'doc_keyword_search': {
@@ -597,8 +599,7 @@ export class TextStreamParser extends BaseStreamParser<string> {
             }
             break;
           }
-          case 'web_search_cloudsway':
-          case 'web_search_exa': {
+          case 'web_search_parallel': case 'web_extract_parallel': case 'web_crawl_firecrawl': {
             const output = chunk.output;
             if (Array.isArray(output)) {
               result += `\n${this.getWebSearchLinks(output)}\n`;

@@ -102,6 +102,9 @@ test.before(async t => {
               apiKey: process.env.COPILOT_ANTHROPIC_API_KEY ?? '1',
             },
           },
+          parallel: { key: process.env.COPILOT_PARALLEL_API_KEY ?? '1' },
+          firecrawl: { key: process.env.COPILOT_FIRECRAWL_API_KEY ?? '1' },
+          agentBrowser: { command: 'npx -y agent-browser' },
           exa: {
             key: process.env.COPILOT_EXA_API_KEY ?? '1',
           },
@@ -1199,7 +1202,7 @@ test('TextStreamParser should format different types of chunks correctly', t => 
     webSearch: {
       chunk: {
         type: 'tool-call' as const,
-        toolName: 'web_search_exa' as const,
+        toolName: 'web_search_parallel' as const,
         toolCallId: 'test-id-1',
         input: { query: 'test query', mode: 'AUTO' as const },
       },
@@ -1209,7 +1212,7 @@ test('TextStreamParser should format different types of chunks correctly', t => 
     webCrawl: {
       chunk: {
         type: 'tool-call' as const,
-        toolName: 'web_crawl_exa' as const,
+        toolName: 'web_extract_parallel' as const,
         toolCallId: 'test-id-2',
         input: { url: 'https://example.com' },
       },
@@ -1219,7 +1222,7 @@ test('TextStreamParser should format different types of chunks correctly', t => 
     toolResult: {
       chunk: {
         type: 'tool-result' as const,
-        toolName: 'web_search_exa' as const,
+        toolName: 'web_search_parallel' as const,
         toolCallId: 'test-id-1',
         input: { query: 'test query', mode: 'AUTO' as const },
         output: [
@@ -1315,7 +1318,7 @@ test('TextStreamParser should process a sequence of message chunks', t => {
       {
         type: 'tool-call' as const,
         toolCallId: 'toolu_01ABCxyz123456789',
-        toolName: 'web_search_exa' as const,
+        toolName: 'web_search_parallel' as const,
         input: {
           query: 'latest quantum computing breakthroughs cryptography impact',
         },
@@ -1325,7 +1328,7 @@ test('TextStreamParser should process a sequence of message chunks', t => {
       {
         type: 'tool-result' as const,
         toolCallId: 'toolu_01ABCxyz123456789',
-        toolName: 'web_search_exa' as const,
+        toolName: 'web_search_parallel' as const,
         input: {
           query: 'latest quantum computing breakthroughs cryptography impact',
         },

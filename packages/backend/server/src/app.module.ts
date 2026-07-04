@@ -38,7 +38,6 @@ import { UserModule } from './core/user';
 import { VersionModule } from './core/version';
 import { Env } from './env';
 import { ModelsModule } from './models';
-import { CaptchaModule } from './plugins/captcha';
 import { CopilotModule } from './plugins/copilot';
 import { GCloudModule } from './plugins/gcloud';
 import { OAuthModule } from './plugins/oauth';
@@ -152,7 +151,6 @@ export function buildAppModule(env: Env) {
       StorageModule,
       ServerConfigResolverModule,
       CopilotModule,
-      CaptchaModule,
       OAuthModule
     )
 

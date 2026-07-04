@@ -120,7 +120,7 @@ export const configurableTools = [
     value: ['pythonCoding', 'pythonSandbox'],
   },
   {
-    label: 'Browser Use',
+    label: 'Agent Browser',
     icon: <SelectionIcon />,
     value: 'browserUse',
   },

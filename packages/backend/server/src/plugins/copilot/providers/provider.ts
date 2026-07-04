@@ -17,17 +17,16 @@ import { CopilotStorage } from '../storage';
 import {
   buildDocSearchGetter,
   buildSaveDocGetter,
-  createBrowserUseTool,
+  createAgentBrowserTool,
   createChooseTool,
-  createCloudswayReadTool,
-  createCloudswaySearchTool,
-  createCodeArtifactTool,
+    createCodeArtifactTool,
   createConversationSummaryTool,
   createDocComposeTool,
   createDocSemanticSearchTool,
   createVercelPythonSandboxTool,
-  createExaCrawlTool,
-  createExaSearchTool,
+  createFirecrawlTool,
+  createParallelExtractTool,
+  createParallelSearchTool,
   createMakeItRealTool,
   createMarkTodoTool,
   createTaskAnalysisTool,
@@ -190,10 +189,7 @@ export abstract class CopilotProvider<C = any> {
         }
         switch (tool) {
           case 'browserUse': {
-            tools.browser_use = createBrowserUseTool(
-              writable,
-              this.OpenAgentConfig
-            );
+            tools.agent_browser = createAgentBrowserTool(this.OpenAgentConfig);
             break;
           }
           case 'codeArtifact': {
@@ -241,16 +237,10 @@ export abstract class CopilotProvider<C = any> {
             tools.mark_todo = createMarkTodoTool(this.cache);
             break;
           }
-          case 'webSearch': {
-            tools.web_search_exa = createExaSearchTool(this.OpenAgentConfig);
-            tools.web_crawl_exa = createExaCrawlTool(this.OpenAgentConfig);
-            tools.web_search_cloudsway = createCloudswaySearchTool(
-              this.OpenAgentConfig
-            );
-            tools.web_crawl_cloudsway = createCloudswayReadTool(
-              this.OpenAgentConfig
-            );
-
+                    case 'webSearch': {
+            tools.web_search_parallel = createParallelSearchTool(this.OpenAgentConfig);
+            tools.web_extract_parallel = createParallelExtractTool(this.OpenAgentConfig);
+            tools.web_crawl_firecrawl = createFirecrawlTool(this.OpenAgentConfig);
             break;
           }
           case 'docCompose': {

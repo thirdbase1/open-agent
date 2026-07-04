@@ -57,37 +57,13 @@ export const useAuthStore = create<AuthState>()(
       },
 
       // Password login (renamed from login)
-      signInPassword: async (
-        email: string,
-        password: string,
-        options?: { verifyToken?: string; challenge?: string }
-      ) => {
+      ,signInPassword: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
         try {
-          // auto-fetch challenge if not provided
-          if (!options?.challenge) {
-            const { challenge } = await getCaptchaChallenge();
-            if (challenge) {
-              options = { ...options, challenge };
-            }
-          }
-          const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
-          };
-          if (options?.verifyToken)
-            headers['x-captcha-token'] = options.verifyToken;
-          if (options?.challenge)
-            headers['x-captcha-challenge'] = options.challenge;
-
           const response = await fetch('/api/auth/sign-in', {
             method: 'POST',
-            headers,
-            body: JSON.stringify({
-              email,
-              password,
-              verifyToken: options?.verifyToken,
-              challenge: options?.challenge,
-            }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
           });
           if (!response.ok) throw new Error('Login failed');
           const data = await response.json();
@@ -208,28 +184,3 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
-
-// Captcha caching helpers (5-minute TTL)
-let cachedChallenge: string | undefined;
-let cachedAt = 0;
-
-async function getCaptchaChallenge(): Promise<{ challenge?: string }> {
-  const now = Date.now();
-  if (cachedChallenge && now - cachedAt < 5 * 60 * 1000) {
-    return { challenge: cachedChallenge };
-  }
-
-  try {
-    const res = await fetch('/api/auth/challenge');
-    if (!res.ok) return {};
-    const data = (await res.json()) as { challenge: string };
-    if (data?.challenge) {
-      cachedChallenge = data.challenge;
-      cachedAt = now;
-      return { challenge: cachedChallenge };
-    }
-  } catch {
-    // ignore errors – treat as no-captcha required
-  }
-  return {};
-}
