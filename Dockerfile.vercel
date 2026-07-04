@@ -44,7 +44,7 @@ RUN yarn config set --json supportedArchitectures.libc '["glibc"]'
 COPY --from=rust-builder /app/packages/backend/native/server-native.node ./packages/backend/native/
 
 RUN if [ ! -d "/app/packages/backend/server/dist" ] || [ ! -d "/app/packages/frontend/app/dist" ]; then \
-        yarn install --immutable && \
+        (yarn install --immutable || yarn install) && \
         yarn workspace @afk/app build && \
         yarn workspace @afk/server prisma generate && \
         yarn workspace @afk/server build && \
