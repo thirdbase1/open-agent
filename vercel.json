@@ -3,13 +3,17 @@
   "services": {
     "server": {
       "root": ".",
-      "runtime": "container"
+      "runtime": "container",
+      "framework": null,
+      "entrypoint": "Dockerfile.vercel"
     }
   },
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": { "service": "server" }
+      "destination": {
+        "service": "server"
+      }
     }
   ]
 }
