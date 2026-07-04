@@ -25,7 +25,7 @@ import {
   createDesignSystemTool,
   createVisualPolishTool,
   createChooseTool,
-    createCodeArtifactTool,
+  createCodeArtifactTool,
   createConversationSummaryTool,
   createDocComposeTool,
   createDocSemanticSearchTool,
@@ -253,10 +253,16 @@ export abstract class CopilotProvider<C = any> {
             tools.mark_todo = createMarkTodoTool(this.cache);
             break;
           }
-                    case 'webSearch': {
-            tools.web_search_parallel = createParallelSearchTool(this.OpenAgentConfig);
-            tools.web_extract_parallel = createParallelExtractTool(this.OpenAgentConfig);
-            tools.web_crawl_firecrawl = createFirecrawlTool(this.OpenAgentConfig);
+          case 'webSearch': {
+            tools.web_search_parallel = createParallelSearchTool(
+              this.OpenAgentConfig
+            );
+            tools.web_extract_parallel = createParallelExtractTool(
+              this.OpenAgentConfig
+            );
+            tools.web_crawl_firecrawl = createFirecrawlTool(
+              this.OpenAgentConfig
+            );
             break;
           }
           case 'docCompose': {
@@ -309,11 +315,7 @@ export abstract class CopilotProvider<C = any> {
             break;
           }
           case 'designGenerator': {
-            tools.design_generator = createDesignGeneratorTool(
-              writable,
-              prompt,
-              this.factory
-            );
+            tools.design_generator = createDesignGeneratorTool();
             break;
           }
           case 'designSystem': {

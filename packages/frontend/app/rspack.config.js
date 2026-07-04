@@ -250,4 +250,9 @@ export default defineConfig({
   experiments: {
     topLevelAwait: true,
   },
+  performance: {
+    // Asset size warnings are not useful for this app — the main bundle
+    // includes editor components and icons that are inherently large.
+    hints: false,
+  },
 });

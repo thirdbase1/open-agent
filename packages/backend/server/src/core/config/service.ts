@@ -117,7 +117,18 @@ export class ServerService implements OnApplicationBootstrap {
   }
 
   private async setup() {
-    const overrides = await this.loadDbOverrides();
+    let overrides: DeepPartial<AppConfig> = {};
+    try {
+      overrides = await this.loadDbOverrides();
+    } catch (err) {
+      // Database might not be migrated yet or might be temporarily
+      // unavailable. Don't crash the server — proceed with default config.
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[open-agent] Could not load config overrides from database:',
+        err instanceof Error ? err.message : err
+      );
+    }
     this.configFactory.override(overrides);
     await this.event.emitAsync('config.init', {
       config: this.configFactory.config,

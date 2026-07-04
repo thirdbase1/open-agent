@@ -18,6 +18,16 @@ import { serverTimingAndCache } from './middleware/timing';
 const OneMB = 1024 * 1024;
 
 export async function run() {
+  // Log critical env var status for debugging Vercel deployment issues
+  const requiredEnvVars = ['DATABASE_URL', 'REDIS_URL'];
+  const missing = requiredEnvVars.filter(v => !process.env[v]);
+  if (missing.length > 0) {
+    console.warn(
+      `[open-agent] WARNING: Missing env vars: ${missing.join(', ')}. ` +
+        `Using defaults — app may not function correctly in production.`
+    );
+  }
+
   const { AppModule } = await import('./app.module');
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {

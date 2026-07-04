@@ -30,15 +30,17 @@ const providerIcons: Record<string, React.ReactNode> = {
 
 // Model display name mapping
 function getModelLabel(modelId: string): string {
-  return modelId
-    .replace('fal-ai/', '')
-    .replace('anthropic/', '')
-    .replace('google/', '')
-    .split('/')
-    .pop()
-    ?.split('-')
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ') || modelId;
+  return (
+    modelId
+      .replace('fal-ai/', '')
+      .replace('anthropic/', '')
+      .replace('google/', '')
+      .split('/')
+      .pop()
+      ?.split('-')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ') || modelId
+  );
 }
 
 interface DynamicModel {
@@ -49,15 +51,23 @@ interface DynamicModel {
 }
 
 // Fallback static models if API fails
-const fallbackModels = [
-  { label: 'Claude Sonnet 4', value: 'claude-sonnet-4@20250514', icon: <ClaudeIcon /> },
+export const fallbackModels = [
+  {
+    label: 'Claude Sonnet 4',
+    value: 'claude-sonnet-4@20250514',
+    icon: <ClaudeIcon />,
+  },
   { label: 'Gemini 2.5 Pro', value: 'gemini-2.5-pro', icon: <GeminiIcon /> },
   { label: 'GPT-5', value: 'gpt-5', icon: <ChatGPTIcon /> },
-  { label: 'Gemini 2.5 Flash', value: 'gemini-2.5-flash', icon: <GeminiIcon /> },
+  {
+    label: 'Gemini 2.5 Flash',
+    value: 'gemini-2.5-flash',
+    icon: <GeminiIcon />,
+  },
   { label: 'o4 Mini', value: 'o4-mini', icon: <ChatGPTIcon /> },
 ];
 
-function useModels() {
+export function useModels() {
   const [models, setModels] = useState(fallbackModels);
 
   useEffect(() => {
@@ -72,9 +82,13 @@ function useModels() {
       .then(({ data }) => {
         if (data?.listCopilotModels?.length) {
           // Filter to text-generating models only
-          const textModels = data.listCopilotModels.filter(
-            (m: DynamicModel) =>
-              m.outputTypes.some(t => t.includes('Text') || t.includes('Object') || t.includes('Structured'))
+          const textModels = data.listCopilotModels.filter((m: DynamicModel) =>
+            m.outputTypes.some(
+              t =>
+                t.includes('Text') ||
+                t.includes('Object') ||
+                t.includes('Structured')
+            )
           );
           if (textModels.length > 0) {
             setModels(
@@ -128,6 +142,36 @@ export const configurableTools = [
     label: 'Task Analysis',
     icon: <ThinkingIcon />,
     value: 'taskAnalysis',
+  },
+  {
+    label: 'Web Fetch',
+    icon: <WebIcon />,
+    value: 'webFetch',
+  },
+  {
+    label: 'URL Scanner',
+    icon: <WebIcon />,
+    value: 'urlScanner',
+  },
+  {
+    label: 'Quick Compute',
+    icon: <CodeIcon />,
+    value: 'quickCompute',
+  },
+  {
+    label: 'Design Generator',
+    icon: <MakeItRealIcon />,
+    value: 'designGenerator',
+  },
+  {
+    label: 'Design System',
+    icon: <MakeItRealIcon />,
+    value: 'designSystem',
+  },
+  {
+    label: 'Visual Polish',
+    icon: <MakeItRealIcon />,
+    value: 'visualPolish',
   },
 ];
 

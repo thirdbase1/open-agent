@@ -13,7 +13,12 @@ import type { StoreApi } from 'zustand';
 import { cn } from '@/lib/utils';
 import type { ChatSessionState } from '@/store/copilot/types';
 
-import { ChatConfigMenu, defaultTools, tempModels } from './chat-config';
+import {
+  ChatConfigMenu,
+  defaultTools,
+  useModels,
+  fallbackModels,
+} from './chat-config';
 import { ContextPreview, ContextSelectorMenu } from './chat-context';
 import * as styles from './chat-input.css';
 
@@ -38,8 +43,9 @@ export const ChatInput = ({
   isCreating?: boolean;
   initialInput?: string;
 }) => {
+  const models = useModels();
   const [tools, setTools] = useState(defaultTools);
-  const [model, setModel] = useState(tempModels[0].value);
+  const [model, setModel] = useState(fallbackModels[0].value);
   const [input, setInput] = useState(initialInput ?? '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [textareaHeight, setTextareaHeight] = useState(45);
@@ -164,7 +170,7 @@ export const ChatInput = ({
           >
             <Button className={styles.modelSelector} variant="plain">
               <div className="flex items-center gap-1">
-                {tempModels.find(m => m.value === model)?.label}
+                {models.find(m => m.value === model)?.label}
                 <ArrowDownSmallIcon className="text-xl" />
               </div>
             </Button>

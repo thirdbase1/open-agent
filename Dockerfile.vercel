@@ -1,3 +1,7 @@
+# ─── Stage 1: Rust builder for native module ───────────────────────────
+# Uses node:22-bookworm-slim as a sidecar to provide Node.js without
+# running the nodesource setup script (which generates 3+ apt warnings,
+# 2 debconf warnings, and 2 "packages can be upgraded" messages).
 FROM rust:1.88.0-bookworm AS rust-builder
 
 WORKDIR /app
@@ -6,6 +10,15 @@ COPY . .
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH}
 ENV DEBIAN_FRONTEND=noninteractive
+
+# Copy Node.js from the official image — no apt warnings, no debconf,
+# no "packages can be upgraded" noise.  This replaces the old
+# `curl -fsSL https://deb.nodesource.com/setup_22.x | sh -` approach.
+COPY --from=node:22-bookworm-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:22-bookworm-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
+
+# Enable yarn via corepack (ships with Node.js)
+RUN corepack enable yarn
 
 RUN case "${TARGETARCH}" in \
     amd64) NATIVE_FILE="server-native.x64.node" ;; \
@@ -19,15 +32,13 @@ RUN case "${TARGETARCH}" in \
     else \
     echo "Pre-built native module not found: ${NATIVE_FILE}"; \
     echo "Building native module for current platform"; \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | sh -; \
-    apt-get install -y nodejs apt-utils 2>/dev/null; \
-    corepack enable yarn; \
     yarn config set --json supportedArchitectures.cpu '["x64", "arm64", "arm"]'; \
     yarn config set --json supportedArchitectures.libc '["glibc"]'; \
     yarn workspaces focus @afk/server-native; \
     yarn workspace @afk/server-native build; \
     fi
 
+# ─── Stage 2: Builder (frontend + backend) ────────────────────────────
 FROM node:22-bookworm-slim AS builder
 
 WORKDIR /app
@@ -52,6 +63,7 @@ RUN if [ ! -d "/app/packages/backend/server/dist" ] || [ ! -d "/app/packages/fro
         mv ./@afk ./packages/backend/server/node_modules; \
     fi
 
+# ─── Stage 3: Merge (collect artifacts) ───────────────────────────────
 FROM node:22-bookworm-slim AS merge
 
 WORKDIR /app
@@ -62,34 +74,31 @@ COPY --from=builder /app/packages/backend/server/schema.prisma ./schema.prisma
 COPY --from=builder /app/packages/backend/server/migrations ./migrations
 COPY --from=builder /app/packages/frontend/app/dist ./static
 
+# ─── Stage 4: Production ──────────────────────────────────────────────
 FROM node:22-bookworm-slim AS production
 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && \
+# Install apt-utils first to prevent "debconf: delaying package
+# configuration" warning.  stderr from apt-get update is suppressed
+# to eliminate the "apt does not have a stable CLI interface" and
+# "N packages can be upgraded" messages.
+RUN (apt-get update 2>/dev/null || true) && \
+    apt-get install -y --no-install-recommends apt-utils 2>/dev/null && \
     apt-get install -y --no-install-recommends \
     openssl \
     libjemalloc2 \
     ca-certificates \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+    2>/dev/null && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY --from=merge /app .
 
 # Ensure the Rust native module is in the right place inside node_modules.
-# The builder stage may have it via workspace symlink, but we make sure
-# the .node binary is physically present at the require() path.
 RUN if [ ! -f ./node_modules/@afk/server-native/server-native.node ] && [ -f ./node_modules/@afk/server-native/server-native.x64.node ]; then \
       cp ./node_modules/@afk/server-native/server-native.x64.node ./node_modules/@afk/server-native/server-native.node; \
     fi
 
-# agent-browser runs inside Vercel Sandbox, not in this container.
-# No need to install it globally here — the sandbox handles its own deps.
-
 ENV NODE_ENV=production
 
-# Vercel injects $PORT (default 80 for containers). Map it to the app's
-# expected OPEN_AGENT_SERVER_PORT env var so it listens on the right port.
-# LD_PRELOAD is set conditionally — if jemalloc isn't found, the app still
-# starts without it (jemalloc is a perf optimization, not a requirement).
-CMD ["sh", "-c", "if [ -f /usr/lib/x86_64-linux-gnu/libjemalloc.so.2 ]; then export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2; fi && OPEN_AGENT_SERVER_PORT=${PORT:-80} node dist/main.mjs"]
+CMD ["sh", "-c", "if [ -f /usr/lib/x86_64-linux-gnu/libjemalloc.so.2 ]; then export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2; fi && (npx prisma migrate deploy --schema schema.prisma 2>&1 | head -5 || echo '[open-agent] Migration deferred') & OPEN_AGENT_SERVER_PORT=${PORT:-80} node dist/main.mjs"]

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createTool, duplicateStreamObjectStream } from './utils';
+import { createTool } from './utils';
 import { toolError } from './error';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -91,7 +91,8 @@ INSTEAD, DO THIS:
 const DESIGN_PRESETS = {
   editorial: {
     name: 'Editorial',
-    description: 'Magazine-style layout with strong typography, asymmetric grid, generous whitespace',
+    description:
+      'Magazine-style layout with strong typography, asymmetric grid, generous whitespace',
     fonts: { display: 'Fraunces', body: 'Newsreader', mono: 'JetBrains Mono' },
     palette: {
       bg: '#FAFAF7',
@@ -121,7 +122,8 @@ const DESIGN_PRESETS = {
   },
   warm: {
     name: 'Warm Studio',
-    description: 'Warm, crafted, slightly formal — like a design studio portfolio',
+    description:
+      'Warm, crafted, slightly formal — like a design studio portfolio',
     fonts: { display: 'Playfair Display', body: 'DM Sans', mono: 'Fira Code' },
     palette: {
       bg: '#F5F0E8',
@@ -137,7 +139,11 @@ const DESIGN_PRESETS = {
   technical: {
     name: 'Technical',
     description: 'Clean, precise, data-dense — for dashboards and B2B tools',
-    fonts: { display: 'IBM Plex Sans', body: 'IBM Plex Sans', mono: 'IBM Plex Mono' },
+    fonts: {
+      display: 'IBM Plex Sans',
+      body: 'IBM Plex Sans',
+      mono: 'IBM Plex Mono',
+    },
     palette: {
       bg: '#0D1117',
       surface: '#161B22',
@@ -151,8 +157,13 @@ const DESIGN_PRESETS = {
   },
   playful: {
     name: 'Playful',
-    description: 'Bold, colorful, personality-driven — for consumer apps and Gen Z',
-    fonts: { display: 'Bricolage Grotesque', body: 'Plus Jakarta Sans', mono: 'Fragment Mono' },
+    description:
+      'Bold, colorful, personality-driven — for consumer apps and Gen Z',
+    fonts: {
+      display: 'Bricolage Grotesque',
+      body: 'Plus Jakarta Sans',
+      mono: 'Fragment Mono',
+    },
     palette: {
       bg: '#FFFEF7',
       surface: '#FFFFFF',
@@ -166,8 +177,13 @@ const DESIGN_PRESETS = {
   },
   minimal: {
     name: 'Minimal Swiss',
-    description: 'Swiss design principles, grid-based, Helvetica-adjacent, precise',
-    fonts: { display: 'Suisse Int\'l', body: 'Inter Tight', mono: 'Suisse Mono' },
+    description:
+      'Swiss design principles, grid-based, Helvetica-adjacent, precise',
+    fonts: {
+      display: "Suisse Int'l",
+      body: 'Inter Tight',
+      mono: 'Suisse Mono',
+    },
     palette: {
       bg: '#FFFFFF',
       surface: '#F7F7F7',
@@ -198,14 +214,7 @@ const LAYOUT_PATTERNS = [
 
 // ─── Tool Definition ────────────────────────────────────────────────────────
 
-export const createDesignGeneratorTool = (
-  writable: WritableStream,
-  prompt: any,
-  factory: any
-) => {
-  const { readable, writable: toolStream } = new TransformStream();
-  duplicateStreamObjectStream(writable, toolStream);
-
+export const createDesignGeneratorTool = () => {
   return createTool(
     { toolName: 'design_generator' },
     {
@@ -222,44 +231,77 @@ export const createDesignGeneratorTool = (
         'Layout patterns: asymmetric, editorial-spread, feature-list, dashboard,\n' +
         'story-scroll, gallery-masonry, product-showcase, pricing, testimonial, cta',
       inputSchema: z.object({
-        prompt: z.string().describe(
-          'What to design. Can be vague ("landing page for my startup") or ' +
-          'specific ("3-column dashboard with sidebar nav, data table, and charts"). ' +
-          'The tool will infer intent, audience, and aesthetic direction.'
-        ),
-        preset: z.enum([
-          'auto', 'editorial', 'brutalist', 'warm', 'technical', 'playful', 'minimal',
-        ]).default('auto').describe(
-          'Design system preset. "auto" lets the tool choose based on the prompt. ' +
-          'editorial=magazine, brutalist=raw/high-contrast, warm=studio/crafted, ' +
-          'technical=dashboard/B2B, playful=consumer/GenZ, minimal=Swiss/precise.'
-        ),
-        contentType: z.enum([
-          'landing-page', 'dashboard', 'portfolio', 'product-page',
-          'pricing-page', 'blog', 'custom', 'auto',
-        ]).default('auto').describe('Type of content to generate.'),
-        brandColors: z.array(z.string()).optional().describe(
-          'Optional brand color hex codes to use instead of preset defaults. ' +
-          'E.g. ["#FF5733", "#2C3E50", "#ECF0F1"]'
-        ),
-        sections: z.array(z.string()).optional().describe(
-          'Optional list of sections to include. E.g. ["hero", "features", "pricing", "footer"]. ' +
-          'If omitted, the tool will determine appropriate sections based on contentType.'
-        ),
-        excludePatterns: z.array(z.string()).optional().describe(
-          'Additional patterns to avoid beyond the built-in anti-slop rules. ' +
-          'E.g. ["animations", "images", "icons"]'
-        ),
+        prompt: z
+          .string()
+          .describe(
+            'What to design. Can be vague ("landing page for my startup") or ' +
+              'specific ("3-column dashboard with sidebar nav, data table, and charts"). ' +
+              'The tool will infer intent, audience, and aesthetic direction.'
+          ),
+        preset: z
+          .enum([
+            'auto',
+            'editorial',
+            'brutalist',
+            'warm',
+            'technical',
+            'playful',
+            'minimal',
+          ])
+          .default('auto')
+          .describe(
+            'Design system preset. "auto" lets the tool choose based on the prompt. ' +
+              'editorial=magazine, brutalist=raw/high-contrast, warm=studio/crafted, ' +
+              'technical=dashboard/B2B, playful=consumer/GenZ, minimal=Swiss/precise.'
+          ),
+        contentType: z
+          .enum([
+            'landing-page',
+            'dashboard',
+            'portfolio',
+            'product-page',
+            'pricing-page',
+            'blog',
+            'custom',
+            'auto',
+          ])
+          .default('auto')
+          .describe('Type of content to generate.'),
+        brandColors: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Optional brand color hex codes to use instead of preset defaults. ' +
+              'E.g. ["#FF5733", "#2C3E50", "#ECF0F1"]'
+          ),
+        sections: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Optional list of sections to include. E.g. ["hero", "features", "pricing", "footer"]. ' +
+              'If omitted, the tool will determine appropriate sections based on contentType.'
+          ),
+        excludePatterns: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Additional patterns to avoid beyond the built-in anti-slop rules. ' +
+              'E.g. ["animations", "images", "icons"]'
+          ),
       }),
-      execute: async (input) => {
+      execute: async input => {
         try {
           // Determine the preset if auto
           let preset = input.preset;
           if (preset === 'auto') {
             const p = input.prompt.toLowerCase();
-            if (p.match(/dashboard|admin|data|chart|metric|analytics|b2b|saas/)) {
+            if (
+              p.match(/dashboard|admin|data|chart|metric|analytics|b2b|saas/)
+            ) {
               preset = 'technical';
-            } else if (p.match(/magazine|blog|article|editorial|news|content/)) {
+            } else if (
+              p.match(/magazine|blog|article|editorial|news|content/)
+            ) {
               preset = 'editorial';
             } else if (p.match(/portfolio|studio|agency|design|creative/)) {
               preset = 'warm';
@@ -274,7 +316,8 @@ export const createDesignGeneratorTool = (
             }
           }
 
-          const designSystem = DESIGN_PRESETS[preset as keyof typeof DESIGN_PRESETS];
+          const designSystem =
+            DESIGN_PRESETS[preset as keyof typeof DESIGN_PRESETS];
 
           // Determine content type if auto
           let contentType = input.contentType;
@@ -282,8 +325,10 @@ export const createDesignGeneratorTool = (
             const p = input.prompt.toLowerCase();
             if (p.match(/dashboard|admin|panel/)) contentType = 'dashboard';
             else if (p.match(/portfolio|showcase/)) contentType = 'portfolio';
-            else if (p.match(/product|shop|store|item/)) contentType = 'product-page';
-            else if (p.match(/pricing|plan|subscription/)) contentType = 'pricing-page';
+            else if (p.match(/product|shop|store|item/))
+              contentType = 'product-page';
+            else if (p.match(/pricing|plan|subscription/))
+              contentType = 'pricing-page';
             else if (p.match(/blog|article|post/)) contentType = 'blog';
             else contentType = 'landing-page';
           }
@@ -292,14 +337,15 @@ export const createDesignGeneratorTool = (
           const sections = input.sections || getDefaultSections(contentType);
 
           // Override colors if brand colors provided
-          const colors = input.brandColors && input.brandColors.length >= 2
-            ? {
-                ...designSystem.palette,
-                accent: input.brandColors[0],
-                bg: input.brandColors[1],
-                surface: input.brandColors[2] || designSystem.palette.surface,
-              }
-            : designSystem.palette;
+          const colors =
+            input.brandColors && input.brandColors.length >= 2
+              ? {
+                  ...designSystem.palette,
+                  accent: input.brandColors[0],
+                  bg: input.brandColors[1],
+                  surface: input.brandColors[2] || designSystem.palette.surface,
+                }
+              : designSystem.palette;
 
           const designBrief = {
             preset: designSystem.name,
@@ -317,7 +363,8 @@ export const createDesignGeneratorTool = (
 
           return {
             designBrief,
-            instructions: `Generate a ${designSystem.name} design for a ${contentType} using the design system below. ` +
+            instructions:
+              `Generate a ${designSystem.name} design for a ${contentType} using the design system below. ` +
               `Follow the anti-slop rules strictly. Use the ${preset} preset colors and fonts. ` +
               `Sections: ${sections.join(', ')}. ` +
               `Generate editable document blocks that render this design in the Open-Agent frontend.`,
@@ -334,17 +381,52 @@ export const createDesignGeneratorTool = (
 function getDefaultSections(contentType: string): string[] {
   switch (contentType) {
     case 'landing-page':
-      return ['hero-asymmetric', 'problem-solution', 'feature-list', 'social-proof-inline', 'cta-strip', 'footer'];
+      return [
+        'hero-asymmetric',
+        'problem-solution',
+        'feature-list',
+        'social-proof-inline',
+        'cta-strip',
+        'footer',
+      ];
     case 'dashboard':
-      return ['sidebar-nav', 'header-bar', 'main-content-area', 'data-table', 'chart-panel', 'action-bar'];
+      return [
+        'sidebar-nav',
+        'header-bar',
+        'main-content-area',
+        'data-table',
+        'chart-panel',
+        'action-bar',
+      ];
     case 'portfolio':
-      return ['intro-asymmetric', 'project-gallery-masonry', 'about-inline', 'contact-cta'];
+      return [
+        'intro-asymmetric',
+        'project-gallery-masonry',
+        'about-inline',
+        'contact-cta',
+      ];
     case 'product-page':
-      return ['product-hero-split', 'feature-highlights', 'spec-table', 'reviews-inline', 'purchase-cta'];
+      return [
+        'product-hero-split',
+        'feature-highlights',
+        'spec-table',
+        'reviews-inline',
+        'purchase-cta',
+      ];
     case 'pricing-page':
-      return ['pricing-comparison-single-column', 'feature-matrix', 'faq-inline', 'footer'];
+      return [
+        'pricing-comparison-single-column',
+        'feature-matrix',
+        'faq-inline',
+        'footer',
+      ];
     case 'blog':
-      return ['article-hero-editorial', 'content-spread', 'author-bio-inline', 'related-articles-list'];
+      return [
+        'article-hero-editorial',
+        'content-spread',
+        'author-bio-inline',
+        'related-articles-list',
+      ];
     default:
       return ['hero-asymmetric', 'content-sections', 'cta-strip', 'footer'];
   }
@@ -353,247 +435,344 @@ function getDefaultSections(contentType: string): string[] {
 // ─── Design System Engine ──────────────────────────────────────────────────
 
 export const createDesignSystemTool = () =>
-  createTool({ toolName: 'design_system' }, {
-    description:
-      'Get or list available design system presets for the design generator. ' +
-      'Returns complete design system specs (fonts, colors, spacing, radius) ' +
-      'that can be used to maintain visual consistency across multiple designs.',
-    inputSchema: z.object({
-      action: z.enum(['list', 'get', 'validate']).describe(
-        'list: show all presets, get: get one preset detail, validate: check a design against anti-slop rules'
-      ),
-      preset: z.enum([
-        'editorial', 'brutalist', 'warm', 'technical', 'playful', 'minimal',
-      ]).optional().describe('Preset name (required for "get" action)'),
-      design: z.string().optional().describe(
-        'Design description or HTML to validate against anti-slop rules (for "validate" action)'
-      ),
-    }),
-    execute: async ({ action, preset, design }) => {
-      if (action === 'list') {
-        return {
-          presets: Object.entries(DESIGN_PRESETS).map(([key, val]) => ({
-            id: key,
-            name: val.name,
-            description: val.description,
-            fonts: val.fonts,
-            accentColor: val.palette.accent,
-            bgColor: val.palette.bg,
-          })),
-        };
-      }
-
-      if (action === 'get' && preset) {
-        const sys = DESIGN_PRESETS[preset as keyof typeof DESIGN_PRESETS];
-        if (!sys) return toolError('Preset not found', `Available: ${Object.keys(DESIGN_PRESETS).join(', ')}`);
-        return sys;
-      }
-
-      if (action === 'validate' && design) {
-        const violations: string[] = [];
-        const d = design.toLowerCase();
-
-        if (d.includes('gradient') && (d.includes('purple') || d.includes('violet'))) {
-          violations.push('AI color palette: purple/violet gradient detected');
-        }
-        if (d.includes('glassmorphism') || d.includes('backdrop-filter') || d.includes('frosted')) {
-          violations.push('Glassmorphism detected — uses blur as decoration');
-        }
-        if (d.includes('border-radius: 24') || d.includes('border-radius: 32') || d.includes('border-radius: 48')) {
-          violations.push('Extreme border-radius — cards rounded into blobs');
-        }
-        if (d.includes('font-family: inter') || d.includes('font-family: geist')) {
-          violations.push('Overused font: Inter/Geist — not distinctive');
-        }
-        if (d.includes('gradient') && d.includes('text')) {
-          violations.push('Gradient text — decorative, not meaningful');
-        }
-        if (d.match(/icon.*tile.*heading|icon.*container.*heading/)) {
-          violations.push('Icon tile stacked above heading — universal AI feature card pattern');
-        }
-        if (d.includes('card') && d.includes('inside') && d.includes('card')) {
-          violations.push('Card inside card — excessive nesting');
-        }
-        if (d.includes('uppercase') && d.includes('letter-spacing') && d.includes('hero')) {
-          violations.push('Hero eyebrow — tiny uppercase label above hero headline');
+  createTool(
+    { toolName: 'design_system' },
+    {
+      description:
+        'Get or list available design system presets for the design generator. ' +
+        'Returns complete design system specs (fonts, colors, spacing, radius) ' +
+        'that can be used to maintain visual consistency across multiple designs.',
+      inputSchema: z.object({
+        action: z
+          .enum(['list', 'get', 'validate'])
+          .describe(
+            'list: show all presets, get: get one preset detail, validate: check a design against anti-slop rules'
+          ),
+        preset: z
+          .enum([
+            'editorial',
+            'brutalist',
+            'warm',
+            'technical',
+            'playful',
+            'minimal',
+          ])
+          .optional()
+          .describe('Preset name (required for "get" action)'),
+        design: z
+          .string()
+          .optional()
+          .describe(
+            'Design description or HTML to validate against anti-slop rules (for "validate" action)'
+          ),
+      }),
+      execute: async ({ action, preset, design }) => {
+        if (action === 'list') {
+          return {
+            presets: Object.entries(DESIGN_PRESETS).map(([key, val]) => ({
+              id: key,
+              name: val.name,
+              description: val.description,
+              fonts: val.fonts,
+              accentColor: val.palette.accent,
+              bgColor: val.palette.bg,
+            })),
+          };
         }
 
-        return {
-          valid: violations.length === 0,
-          violations,
-          slopScore: violations.length,
-          recommendation: violations.length === 0
-            ? 'Design passes anti-slop validation'
-            : `Fix ${violations.length} violation(s) to reduce AI slop detection`,
-        };
-      }
+        if (action === 'get' && preset) {
+          const sys = DESIGN_PRESETS[preset as keyof typeof DESIGN_PRESETS];
+          if (!sys)
+            return toolError(
+              'Preset not found',
+              `Available: ${Object.keys(DESIGN_PRESETS).join(', ')}`
+            );
+          return sys;
+        }
 
-      return toolError('Invalid action', 'Use: list, get, or validate');
-    },
-  });
+        if (action === 'validate' && design) {
+          const violations: string[] = [];
+          const d = design.toLowerCase();
+
+          if (
+            d.includes('gradient') &&
+            (d.includes('purple') || d.includes('violet'))
+          ) {
+            violations.push(
+              'AI color palette: purple/violet gradient detected'
+            );
+          }
+          if (
+            d.includes('glassmorphism') ||
+            d.includes('backdrop-filter') ||
+            d.includes('frosted')
+          ) {
+            violations.push('Glassmorphism detected — uses blur as decoration');
+          }
+          if (
+            d.includes('border-radius: 24') ||
+            d.includes('border-radius: 32') ||
+            d.includes('border-radius: 48')
+          ) {
+            violations.push('Extreme border-radius — cards rounded into blobs');
+          }
+          if (
+            d.includes('font-family: inter') ||
+            d.includes('font-family: geist')
+          ) {
+            violations.push('Overused font: Inter/Geist — not distinctive');
+          }
+          if (d.includes('gradient') && d.includes('text')) {
+            violations.push('Gradient text — decorative, not meaningful');
+          }
+          if (d.match(/icon.*tile.*heading|icon.*container.*heading/)) {
+            violations.push(
+              'Icon tile stacked above heading — universal AI feature card pattern'
+            );
+          }
+          if (
+            d.includes('card') &&
+            d.includes('inside') &&
+            d.includes('card')
+          ) {
+            violations.push('Card inside card — excessive nesting');
+          }
+          if (
+            d.includes('uppercase') &&
+            d.includes('letter-spacing') &&
+            d.includes('hero')
+          ) {
+            violations.push(
+              'Hero eyebrow — tiny uppercase label above hero headline'
+            );
+          }
+
+          return {
+            valid: violations.length === 0,
+            violations,
+            slopScore: violations.length,
+            recommendation:
+              violations.length === 0
+                ? 'Design passes anti-slop validation'
+                : `Fix ${violations.length} violation(s) to reduce AI slop detection`,
+          };
+        }
+
+        return toolError('Invalid action', 'Use: list, get, or validate');
+      },
+    }
+  );
 
 // ─── Visual Polish Layer ───────────────────────────────────────────────────
 
 export const createVisualPolishTool = () =>
-  createTool({ toolName: 'visual_polish' }, {
-    description:
-      'Apply automatic visual polish to a design: fix spacing rhythm, ' +
-      'color contrast, font hierarchy, and motion semantics. ' +
-      'Checks against anti-slop rules and suggests specific fixes. ' +
-      'Use after generating a design to ensure it passes quality checks.',
-    inputSchema: z.object({
-      designDescription: z.string().describe(
-        'Description or HTML/CSS of the design to polish. ' +
-        'Include layout structure, colors, fonts, spacing, and any animations.'
-      ),
-      targetPreset: z.enum([
-        'editorial', 'brutalist', 'warm', 'technical', 'playful', 'minimal',
-      ]).optional().describe('Target design preset to align the polished result with.'),
-      fixLevel: z.enum(['subtle', 'moderate', 'aggressive']).default('moderate').describe(
-        'How aggressively to fix issues. subtle=only critical fixes, ' +
-        'moderate=fix slop + improve hierarchy, aggressive=full redesign pass.'
-      ),
-    }),
-    execute: async ({ designDescription, targetPreset, fixLevel }) => {
-      const fixes: { category: string; issue: string; fix: string; severity: 'critical' | 'warning' | 'suggestion' }[] = [];
-      const d = designDescription.toLowerCase();
+  createTool(
+    { toolName: 'visual_polish' },
+    {
+      description:
+        'Apply automatic visual polish to a design: fix spacing rhythm, ' +
+        'color contrast, font hierarchy, and motion semantics. ' +
+        'Checks against anti-slop rules and suggests specific fixes. ' +
+        'Use after generating a design to ensure it passes quality checks.',
+      inputSchema: z.object({
+        designDescription: z
+          .string()
+          .describe(
+            'Description or HTML/CSS of the design to polish. ' +
+              'Include layout structure, colors, fonts, spacing, and any animations.'
+          ),
+        targetPreset: z
+          .enum([
+            'editorial',
+            'brutalist',
+            'warm',
+            'technical',
+            'playful',
+            'minimal',
+          ])
+          .optional()
+          .describe('Target design preset to align the polished result with.'),
+        fixLevel: z
+          .enum(['subtle', 'moderate', 'aggressive'])
+          .default('moderate')
+          .describe(
+            'How aggressively to fix issues. subtle=only critical fixes, ' +
+              'moderate=fix slop + improve hierarchy, aggressive=full redesign pass.'
+          ),
+      }),
+      execute: async ({ designDescription, targetPreset, fixLevel }) => {
+        const fixes: {
+          category: string;
+          issue: string;
+          fix: string;
+          severity: 'critical' | 'warning' | 'suggestion';
+        }[] = [];
+        const d = designDescription.toLowerCase();
 
-      // Spacing checks
-      if (d.match(/padding:\s*(\d+)px/g)) {
-        const paddings = [...d.matchAll(/padding:\s*(\d+)px/g)].map(m => parseInt(m[1]));
-        const unique = [...new Set(paddings)];
-        if (unique.length === 1 && paddings.length > 3) {
-          fixes.push({
-            category: 'spacing',
-            issue: 'Monotonous spacing — same padding value used everywhere',
-            fix: 'Vary spacing: use tighter padding within groups (8-16px) and larger gaps between sections (48-96px). Create visual rhythm.',
-            severity: 'warning',
-          });
+        // Spacing checks
+        if (d.match(/padding:\s*(\d+)px/g)) {
+          const paddings = [...d.matchAll(/padding:\s*(\d+)px/g)].map(m =>
+            parseInt(m[1])
+          );
+          const unique = [...new Set(paddings)];
+          if (unique.length === 1 && paddings.length > 3) {
+            fixes.push({
+              category: 'spacing',
+              issue: 'Monotonous spacing — same padding value used everywhere',
+              fix: 'Vary spacing: use tighter padding within groups (8-16px) and larger gaps between sections (48-96px). Create visual rhythm.',
+              severity: 'warning',
+            });
+          }
         }
-      }
 
-      // Typography hierarchy
-      if (d.match(/font-size:\s*(\d+)px/g)) {
-        const sizes = [...d.matchAll(/font-size:\s*(\d+)px/g)].map(m => parseInt(m[1]));
-        if (sizes.length >= 2) {
-          const sorted = [...sizes].sort((a, b) => a - b);
-          const minRatio = sorted.length > 1
-            ? sorted[sorted.length - 1] / sorted[0]
-            : 1;
-          if (minRatio < 1.25) {
+        // Typography hierarchy
+        if (d.match(/font-size:\s*(\d+)px/g)) {
+          const sizes = [...d.matchAll(/font-size:\s*(\d+)px/g)].map(m =>
+            parseInt(m[1])
+          );
+          if (sizes.length >= 2) {
+            const sorted = [...sizes].sort((a, b) => a - b);
+            const minRatio =
+              sorted.length > 1 ? sorted[sorted.length - 1] / sorted[0] : 1;
+            if (minRatio < 1.25) {
+              fixes.push({
+                category: 'typography',
+                issue: 'Flat type hierarchy — font sizes too close together',
+                fix: `Current ratio: ${minRatio.toFixed(2)}x. Increase to at least 1.25x between steps. E.g., 14/18/24/36/48px scale.`,
+                severity: 'critical',
+              });
+            }
+          }
+        }
+
+        // Single font check
+        const fontMatches = d.match(/font-family:\s*([^;]+)/g);
+        if (fontMatches) {
+          const fonts = [
+            ...new Set(
+              fontMatches.map(f => f.replace(/font-family:\s*/, '').trim())
+            ),
+          ];
+          if (fonts.length === 1) {
             fixes.push({
               category: 'typography',
-              issue: 'Flat type hierarchy — font sizes too close together',
-              fix: `Current ratio: ${minRatio.toFixed(2)}x. Increase to at least 1.25x between steps. E.g., 14/18/24/36/48px scale.`,
+              issue: `Single font "${fonts[0]}" used for everything — no typographic hierarchy`,
+              fix: 'Pair a distinctive display font for headings with a refined body font for text. E.g., Fraunces + DM Sans, or Playfair Display + Inter Tight.',
+              severity: 'warning',
+            });
+          }
+        }
+
+        // AI slop color check
+        if (
+          d.includes('purple') ||
+          d.includes('violet') ||
+          d.includes('indigo')
+        ) {
+          if (d.includes('gradient')) {
+            fixes.push({
+              category: 'color',
+              issue: 'Purple/violet gradient — the #1 AI slop color pattern',
+              fix: 'Replace with a distinctive, intentional color. Use a warm accent (terracotta, amber), a bold primary (electric blue, forest green), or a monochrome palette with one accent.',
               severity: 'critical',
             });
           }
         }
-      }
 
-      // Single font check
-      const fontMatches = d.match(/font-family:\s*([^;]+)/g);
-      if (fontMatches) {
-        const fonts = [...new Set(fontMatches.map(f => f.replace(/font-family:\s*/, '').trim()))];
-        if (fonts.length === 1) {
+        // Border radius check
+        const radii = [...d.matchAll(/border-radius:\s*(\d+)px/g)].map(m =>
+          parseInt(m[1])
+        );
+        if (radii.some(r => r >= 24)) {
           fixes.push({
-            category: 'typography',
-            issue: `Single font "${fonts[0]}" used for everything — no typographic hierarchy`,
-            fix: 'Pair a distinctive display font for headings with a refined body font for text. E.g., Fraunces + DM Sans, or Playfair Display + Inter Tight.',
+            category: 'visual',
+            issue: `Extreme border-radius (${Math.max(...radii)}px) — cards rounded into blobs`,
+            fix: 'Reduce to 8-16px for cards, 4-6px for inputs/buttons. Reserve full-pill (999px) for tags and small buttons only.',
             severity: 'warning',
           });
         }
-      }
 
-      // AI slop color check
-      if (d.includes('purple') || d.includes('violet') || d.includes('indigo')) {
-        if (d.includes('gradient')) {
+        // Card nesting
+        if ((d.match(/card/g) || []).length > 5) {
+          fixes.push({
+            category: 'layout',
+            issue: 'Too many cards — possible card-in-card nesting',
+            fix: 'Limit nesting to 2 levels. Use flat layouts, dividers, or inline sections instead of wrapping everything in cards.',
+            severity: 'suggestion',
+          });
+        }
+
+        // Motion without meaning
+        if (
+          d.includes('animate') ||
+          d.includes('transition') ||
+          d.includes('keyframe')
+        ) {
+          if (d.match(/bounce|wiggle|float|spin|pulse/)) {
+            fixes.push({
+              category: 'motion',
+              issue:
+                'Decorative motion detected (bounce/wiggle/float) — motion without meaning',
+              fix: 'Replace with purposeful motion: smooth transitions on state change (hover, focus), reveal-on-scroll for content, progress indicators for loading.',
+              severity: 'warning',
+            });
+          }
+        }
+
+        // Gradient text
+        if (
+          d.includes('background-clip') &&
+          d.includes('text') &&
+          d.includes('gradient')
+        ) {
           fixes.push({
             category: 'color',
-            issue: 'Purple/violet gradient — the #1 AI slop color pattern',
-            fix: 'Replace with a distinctive, intentional color. Use a warm accent (terracotta, amber), a bold primary (electric blue, forest green), or a monochrome palette with one accent.',
+            issue: 'Gradient text — decorative, kills scannability',
+            fix: 'Use solid colors for text. If you want emphasis, use weight, size, or color contrast instead.',
             severity: 'critical',
           });
         }
-      }
 
-      // Border radius check
-      const radii = [...d.matchAll(/border-radius:\s*(\d+)px/g)].map(m => parseInt(m[1]));
-      if (radii.some(r => r >= 24)) {
-        fixes.push({
-          category: 'visual',
-          issue: `Extreme border-radius (${Math.max(...radii)}px) — cards rounded into blobs`,
-          fix: 'Reduce to 8-16px for cards, 4-6px for inputs/buttons. Reserve full-pill (999px) for tags and small buttons only.',
-          severity: 'warning',
-        });
-      }
+        // Apply fix level filtering
+        const severityOrder = { critical: 0, warning: 1, suggestion: 2 };
+        const maxSeverity =
+          fixLevel === 'subtle' ? 0 : fixLevel === 'moderate' ? 1 : 2;
+        const filteredFixes = fixes.filter(
+          f => severityOrder[f.severity] <= maxSeverity
+        );
 
-      // Card nesting
-      if ((d.match(/card/g) || []).length > 5) {
-        fixes.push({
-          category: 'layout',
-          issue: 'Too many cards — possible card-in-card nesting',
-          fix: 'Limit nesting to 2 levels. Use flat layouts, dividers, or inline sections instead of wrapping everything in cards.',
-          severity: 'suggestion',
-        });
-      }
-
-      // Motion without meaning
-      if (d.includes('animate') || d.includes('transition') || d.includes('keyframe')) {
-        if (d.match(/bounce|wiggle|float|spin|pulse/)) {
-          fixes.push({
-            category: 'motion',
-            issue: 'Decorative motion detected (bounce/wiggle/float) — motion without meaning',
-            fix: 'Replace with purposeful motion: smooth transitions on state change (hover, focus), reveal-on-scroll for content, progress indicators for loading.',
-            severity: 'warning',
-          });
+        // Target preset alignment
+        let presetAlignment: Record<string, unknown> | undefined;
+        if (targetPreset) {
+          const preset =
+            DESIGN_PRESETS[targetPreset as keyof typeof DESIGN_PRESETS];
+          if (preset) {
+            presetAlignment = {
+              targetPreset: preset.name,
+              recommendedFonts: preset.fonts,
+              recommendedColors: preset.palette,
+              recommendedRadius: preset.radius,
+              spacingPhilosophy: preset.spacing,
+            };
+          }
         }
-      }
 
-      // Gradient text
-      if (d.includes('background-clip') && d.includes('text') && d.includes('gradient')) {
-        fixes.push({
-          category: 'color',
-          issue: 'Gradient text — decorative, kills scannability',
-          fix: 'Use solid colors for text. If you want emphasis, use weight, size, or color contrast instead.',
-          severity: 'critical',
-        });
-      }
-
-      // Apply fix level filtering
-      const severityOrder = { critical: 0, warning: 1, suggestion: 2 };
-      const maxSeverity = fixLevel === 'subtle' ? 0 : fixLevel === 'moderate' ? 1 : 2;
-      const filteredFixes = fixes.filter(f => severityOrder[f.severity] <= maxSeverity);
-
-      // Target preset alignment
-      let presetAlignment: Record<string, unknown> | undefined;
-      if (targetPreset) {
-        const preset = DESIGN_PRESETS[targetPreset as keyof typeof DESIGN_PRESETS];
-        if (preset) {
-          presetAlignment = {
-            targetPreset: preset.name,
-            recommendedFonts: preset.fonts,
-            recommendedColors: preset.palette,
-            recommendedRadius: preset.radius,
-            spacingPhilosophy: preset.spacing,
-          };
-        }
-      }
-
-      return {
-        totalIssues: fixes.length,
-        filteredIssues: filteredFixes.length,
-        fixLevel,
-        fixes: filteredFixes,
-        ...(presetAlignment ? { presetAlignment } : {}),
-        overallScore: Math.max(0, 100 - fixes.length * 15),
-        recommendation: fixes.length === 0
-          ? 'Design passes all anti-slop and quality checks'
-          : fixes.length <= 2
-            ? 'Minor issues — design is mostly clean'
-            : fixes.length <= 5
-              ? 'Several issues — design needs refinement'
-              : 'Major issues — design has significant AI slop patterns',
-      };
-    },
-  });
+        return {
+          totalIssues: fixes.length,
+          filteredIssues: filteredFixes.length,
+          fixLevel,
+          fixes: filteredFixes,
+          ...(presetAlignment ? { presetAlignment } : {}),
+          overallScore: Math.max(0, 100 - fixes.length * 15),
+          recommendation:
+            fixes.length === 0
+              ? 'Design passes all anti-slop and quality checks'
+              : fixes.length <= 2
+                ? 'Minor issues — design is mostly clean'
+                : fixes.length <= 5
+                  ? 'Several issues — design needs refinement'
+                  : 'Major issues — design has significant AI slop patterns',
+        };
+      },
+    }
+  );

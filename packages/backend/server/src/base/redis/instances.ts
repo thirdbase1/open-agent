@@ -29,6 +29,13 @@ function baseOptions(config: Config): RedisOptions {
     ...(config.redis.tls ? { tls: {} } : {}),
     ...redisOptionsFromConnectionUrl(),
     ...config.redis.ioredis,
+    // CRITICAL: Don't connect until the error handler is attached in
+    // onModuleInit().  Without this, an 'error' event can fire before
+    // any listener is registered, which Node.js treats as a fatal
+    // uncaught exception and kills the process (FUNCTION_INVOCATION_FAILED
+    // on Vercel).  lazyConnect defers the TCP handshake until we explicitly
+    // call this.connect() after the handler is in place.
+    lazyConnect: true,
   };
 }
 
@@ -41,6 +48,10 @@ class Redis extends IORedis implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit() {
     this.on('error', this.errorHandler);
+    // Now that the error handler is attached, it's safe to connect.
+    this.connect().catch(err => {
+      this.logger.error(`Failed to connect to Redis: ${err.message}`);
+    });
   }
 
   onModuleDestroy() {
