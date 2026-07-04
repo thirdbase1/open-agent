@@ -33,7 +33,7 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc -b tsconfig.json --verbose",
-    "postinstall": "yarn oa init && yarn husky"
+    "postinstall": "yarn oa init && yarn husky && (npm install -g agent-browser 2>/dev/null && agent-browser install --yes 2>/dev/null || echo '[postinstall] agent-browser install skipped (non-fatal)')"
   },
   "lint-staged": {
     "*": "prettier --write --ignore-unknown --cache",

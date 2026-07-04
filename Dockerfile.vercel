@@ -73,15 +73,23 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     openssl \
     libjemalloc2 \
+    ca-certificates \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY --from=merge /app .
 
+# Pre-install agent-browser CLI globally so it's guaranteed available at runtime.
+# (Chrome download deferred to first `agent-browser` invocation to keep image slim.)
+RUN npm install -g agent-browser --omit=optional 2>/dev/null || \
+    echo "[docker] agent-browser global install skipped (will fall back to npx)"
+
 # Copy built application
 
 ENV LD_PRELOAD=libjemalloc.so.2
 ENV NODE_ENV=production
+ENV AGENT_BROWSER_COMMAND="agent-browser"
 EXPOSE 3010
 
 CMD ["sh", "-c", "OPEN_AGENT_SERVER_PORT=${PORT:-3010} node dist/main.mjs"]
