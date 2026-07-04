@@ -130,9 +130,17 @@ export class ServerService implements OnApplicationBootstrap {
       );
     }
     this.configFactory.override(overrides);
-    await this.event.emitAsync('config.init', {
-      config: this.configFactory.config,
-    });
+    try {
+      await this.event.emitAsync('config.init', {
+        config: this.configFactory.config,
+      });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[open-agent] Could not dispatch config.init event — some modules may use default config:',
+        err instanceof Error ? err.message : err
+      );
+    }
   }
 
   private async loadDbOverrides() {

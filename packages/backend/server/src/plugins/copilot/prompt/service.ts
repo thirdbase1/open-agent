@@ -29,18 +29,39 @@ export class PromptService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     this.cache.clear();
-    await refreshPrompts(this.db);
+    try {
+      await refreshPrompts(this.db);
+    } catch (err) {
+      this.logger.warn(
+        'Could not refresh prompts from database — continuing with defaults:',
+        err instanceof Error ? err.message : err
+      );
+    }
   }
 
   @OnEvent('config.init')
   async onConfigInit() {
-    await this.setup(this.config.copilot?.scenarios);
+    try {
+      await this.setup(this.config.copilot?.scenarios);
+    } catch (err) {
+      this.logger.warn(
+        'Could not setup prompts from config — continuing with defaults:',
+        err instanceof Error ? err.message : err
+      );
+    }
   }
 
   @OnEvent('config.changed')
   async onConfigChanged(event: Events['config.changed']) {
     if ('copilot' in event.updates) {
-      await this.setup(event.updates.copilot?.scenarios);
+      try {
+        await this.setup(event.updates.copilot?.scenarios);
+      } catch (err) {
+        this.logger.warn(
+          'Could not update prompts from config change:',
+          err instanceof Error ? err.message : err
+        );
+      }
     }
   }
 

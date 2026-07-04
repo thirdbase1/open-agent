@@ -175,6 +175,13 @@ type CopilotMessageNotFoundDataType {
   messageId: String!
 }
 
+type CopilotModelInfo {
+  inputTypes: [String!]!
+  modelId: String!
+  outputTypes: [String!]!
+  provider: String!
+}
+
 input CopilotPromptConfigInput {
   frequencyPenalty: Float
   presencePenalty: Float
@@ -610,7 +617,6 @@ type NoCopilotProviderAvailableDataType {
 }
 
 enum OAuthProviderType {
-  Apple
   GitHub
   Google
   OIDC
@@ -670,6 +676,9 @@ type Query {
   """Get current user"""
   currentUser: UserType
   error(name: ErrorNames!): ErrorDataUnion!
+
+  """List all available models from configured providers"""
+  listCopilotModels: [CopilotModelInfo!]!
 
   """List all copilot prompts"""
   listCopilotPrompts: [CopilotPromptType!]!
@@ -761,7 +770,6 @@ enum ServerDeploymentType {
 }
 
 enum ServerFeature {
-  Captcha
   Copilot
   OAuth
 }
