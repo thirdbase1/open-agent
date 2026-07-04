@@ -4,7 +4,7 @@ import { toolError } from './error';
 import { createTool } from './utils';
 
 // Voice Generator — text-to-speech using AI Gateway speech models.
-// Uses TTS models from the AI Gateway (OpenAI TTS-1, TTS-1-HD).
+// Uses any TTS model from the gateway (OpenAI TTS-1, TTS-1-HD, etc.).
 
 export const createVoiceGeneratorTool = () =>
   createTool(
@@ -14,7 +14,8 @@ export const createVoiceGeneratorTool = () =>
         'Generate speech audio from text using AI text-to-speech models. ' +
         'Available voices: alloy, echo, fable, onyx, nova, shimmer. ' +
         'Returns a URL to the generated audio file. ' +
-        'Max input: 4096 characters.',
+        'Max input: 4096 characters. ' +
+        'Pass any TTS model ID. Defaults to openai/tts-1.',
       inputSchema: z.object({
         text: z
           .string()
@@ -29,7 +30,7 @@ export const createVoiceGeneratorTool = () =>
           .string()
           .optional()
           .describe(
-            'TTS model ID (e.g. "openai/tts-1", "openai/tts-1-hd"). Defaults to openai/tts-1'
+            'Any TTS model ID from the gateway (e.g. "openai/tts-1", "openai/tts-1-hd"). Defaults to openai/tts-1.'
           ),
         speed: z
           .number()

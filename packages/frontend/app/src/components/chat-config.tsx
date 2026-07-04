@@ -179,11 +179,6 @@ export const configurableTools = [
     value: 'imageVision',
   },
   {
-    label: 'Video Generator',
-    icon: <MakeItRealIcon />,
-    value: 'videoGenerator',
-  },
-  {
     label: 'Translator',
     icon: <WebIcon />,
     value: 'translator',

@@ -5,6 +5,7 @@ import { toolError } from './error';
 import { createTool } from './utils';
 
 // Content Writer — generate marketing, blog, social media, and email content.
+// Works with ANY capable text model from the gateway.
 
 const CONTENT_TYPES = [
   'blog_post',
@@ -29,7 +30,8 @@ export const createContentWriterTool = () =>
         'Generate professional content for marketing, blogs, social media, ' +
         'emails, and more. ' +
         `Content types: ${CONTENT_TYPES.join(', ')}. ` +
-        'Specify tone, target audience, and key points for best results.',
+        'Specify tone, target audience, and key points for best results. ' +
+        'Pass any capable model ID. Defaults to a strong gateway model.',
       inputSchema: z.object({
         content_type: z
           .enum(CONTENT_TYPES)
@@ -55,6 +57,12 @@ export const createContentWriterTool = () =>
           .enum(['short', 'medium', 'long'])
           .optional()
           .describe('Content length (default: medium)'),
+        model: z
+          .string()
+          .optional()
+          .describe(
+            'Any capable model ID from the gateway. If omitted, uses default.'
+          ),
       }),
       execute: async ({
         content_type,
@@ -63,6 +71,7 @@ export const createContentWriterTool = () =>
         audience,
         key_points,
         length,
+        model,
       }) => {
         try {
           const lenMap = {
@@ -71,6 +80,7 @@ export const createContentWriterTool = () =>
             long: '1000-2000 words',
           };
           const targetLength = lenMap[length || 'medium'];
+          const modelId = model || 'anthropic/claude-sonnet-4-5-20250514';
 
           const systemPrompt = `You are an expert content writer specializing in ${content_type.replace(/_/g, ' ')}.
 Write ${targetLength} of content about "${topic}".
@@ -82,7 +92,7 @@ Format the content with proper headings, paragraphs, and structure.
 Make it engaging, original, and ready to publish.`;
 
           const { text: content } = await generateText({
-            model: 'anthropic/claude-sonnet-4-5-20250514',
+            model: modelId,
             system: systemPrompt,
             prompt: `Write a ${content_type.replace(/_/g, ' ')} about: ${topic}`,
             temperature: 0.7,
@@ -95,6 +105,7 @@ Make it engaging, original, and ready to publish.`;
             topic,
             tone: tone || 'professional',
             word_count: content.trim().split(/\s+/).length,
+            model_used: modelId,
           };
         } catch (e: any) {
           return toolError(

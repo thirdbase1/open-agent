@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { toolError } from './error';
 import { createTool } from './utils';
 
-// Translator — translate text between 30+ languages using AI Gateway models.
+// Translator — translate text between 30+ languages.
+// Works with ANY text model from the gateway.
 
 const LANGUAGES = [
   'English',
@@ -47,7 +48,8 @@ export const createTranslatorTool = () =>
         'Translate text between any of 30+ supported languages. ' +
         'Automatically detects the source language if not specified. ' +
         'Preserves formatting, tone, and context. ' +
-        `Supported languages: ${LANGUAGES.join(', ')}`,
+        `Supported languages: ${LANGUAGES.join(', ')}. ` +
+        'Pass any text model ID to use a specific model. Defaults to a fast gateway model.',
       inputSchema: z.object({
         text: z.string().min(1).describe('The text to translate'),
         target_language: z
@@ -61,9 +63,23 @@ export const createTranslatorTool = () =>
           .string()
           .optional()
           .describe('Additional context to improve translation accuracy'),
+        model: z
+          .string()
+          .optional()
+          .describe(
+            'Any text model ID from the gateway. If omitted, uses default.'
+          ),
       }),
-      execute: async ({ text, target_language, source_language, context }) => {
+      execute: async ({
+        text,
+        target_language,
+        source_language,
+        context,
+        model,
+      }) => {
         try {
+          const modelId = model || 'google/gemini-2.5-flash';
+
           const systemPrompt = `You are a professional translator. Translate the given text to ${target_language}${
             source_language ? ` from ${source_language}` : ''
           }. Preserve formatting, tone, and meaning. Only output the translated text, nothing else.${
@@ -71,7 +87,7 @@ export const createTranslatorTool = () =>
           }`;
 
           const { text: translated } = await generateText({
-            model: 'google/gemini-2.5-flash',
+            model: modelId,
             system: systemPrompt,
             prompt: text,
             temperature: 0.1,
@@ -83,6 +99,7 @@ export const createTranslatorTool = () =>
             target_language,
             original_length: text.length,
             translated_length: translated.length,
+            model_used: modelId,
           };
         } catch (e: any) {
           return toolError(

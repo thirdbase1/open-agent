@@ -5,7 +5,7 @@ import { toolError } from './error';
 import { createTool } from './utils';
 
 // Data Analyzer — analyze CSV/JSON data with natural language questions.
-// Provides statistical summaries, trends, correlations, and insights.
+// Works with ANY capable text model from the gateway.
 
 export const createDataAnalyzerTool = () =>
   createTool(
@@ -15,7 +15,7 @@ export const createDataAnalyzerTool = () =>
         'Analyze CSV or JSON data with natural language questions. ' +
         'Provides statistical summaries, trends, correlations, and insights. ' +
         'Supports datasets up to ~50KB. ' +
-        'Example: "What is the average revenue by quarter?" or "Find outliers in the data"',
+        'Pass any capable model ID. Defaults to a strong gateway model.',
       inputSchema: z.object({
         data: z.string().min(1).describe('CSV or JSON data to analyze'),
         question: z
@@ -28,8 +28,14 @@ export const createDataAnalyzerTool = () =>
           .enum(['csv', 'json'])
           .optional()
           .describe('Data format (auto-detected if omitted)'),
+        model: z
+          .string()
+          .optional()
+          .describe(
+            'Any capable model ID from the gateway. If omitted, uses default.'
+          ),
       }),
-      execute: async ({ data, question, format }) => {
+      execute: async ({ data, question, format, model }) => {
         try {
           const detectedFormat =
             format ||
@@ -37,6 +43,7 @@ export const createDataAnalyzerTool = () =>
               ? 'json'
               : 'csv');
           const dataSize = data.length;
+          const modelId = model || 'anthropic/claude-sonnet-4-5-20250514';
 
           if (dataSize > 50000) {
             return toolError(
@@ -60,7 +67,7 @@ Data:
 ${data.slice(0, 40000)}`;
 
           const { text: analysis } = await generateText({
-            model: 'anthropic/claude-sonnet-4-5-20250514',
+            model: modelId,
             system: systemPrompt,
             prompt: question,
             temperature: 0.1,
@@ -72,6 +79,7 @@ ${data.slice(0, 40000)}`;
             format: detectedFormat,
             data_size: dataSize,
             question,
+            model_used: modelId,
           };
         } catch (e: any) {
           return toolError(

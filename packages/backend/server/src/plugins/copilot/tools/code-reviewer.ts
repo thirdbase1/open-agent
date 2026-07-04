@@ -5,7 +5,7 @@ import { toolError } from './error';
 import { createTool } from './utils';
 
 // Code Reviewer — analyze code for bugs, security issues, best practices.
-// Returns a structured report with severity levels and suggested fixes.
+// Works with ANY capable text model from the gateway.
 
 export const createCodeReviewerTool = () =>
   createTool(
@@ -15,7 +15,7 @@ export const createCodeReviewerTool = () =>
         'Review code for bugs, security vulnerabilities, performance issues, ' +
         'and best practices. Supports 20+ languages. ' +
         'Returns a structured report with severity levels, line references, ' +
-        'and suggested fixes. Use this before deploying code or when debugging.',
+        'and suggested fixes. Pass any capable model ID. Defaults to a strong gateway model.',
       inputSchema: z.object({
         code: z.string().min(1).describe('The code to review'),
         language: z
@@ -28,10 +28,18 @@ export const createCodeReviewerTool = () =>
           .enum(['security', 'performance', 'bugs', 'style', 'all'])
           .optional()
           .describe('Review focus area (default: all)'),
+        model: z
+          .string()
+          .optional()
+          .describe(
+            'Any capable model ID from the gateway. If omitted, uses default.'
+          ),
       }),
-      execute: async ({ code, language, focus }) => {
+      execute: async ({ code, language, focus, model }) => {
         try {
           const focusArea = focus || 'all';
+          const modelId = model || 'anthropic/claude-sonnet-4-5-20250514';
+
           const systemPrompt = `You are an expert code reviewer. Analyze the following ${language || ''} code for ${
             focusArea === 'all'
               ? 'bugs, security issues, performance problems, and style violations'
@@ -47,7 +55,7 @@ Provide a structured review:
 Be thorough but concise. Only report real issues.`;
 
           const { text: review } = await generateText({
-            model: 'anthropic/claude-sonnet-4-5-20250514',
+            model: modelId,
             system: systemPrompt,
             prompt: `\`\`\`${language || ''}
 ${code}
@@ -61,6 +69,7 @@ ${code}
             language: language || 'unknown',
             focus: focusArea,
             code_length: code.length,
+            model_used: modelId,
           };
         } catch (e: any) {
           return toolError(

@@ -38,7 +38,6 @@ import {
   createTaskAnalysisTool,
   createTodoTool,
   createImageVisionTool,
-  createVideoGeneratorTool,
   createTranslatorTool,
   createCodeReviewerTool,
   createContentWriterTool,
@@ -336,10 +335,6 @@ export abstract class CopilotProvider<C = any> {
           }
           case 'imageVision': {
             tools.image_vision = createImageVisionTool();
-            break;
-          }
-          case 'videoGenerator': {
-            tools.video_generator = createVideoGeneratorTool();
             break;
           }
           case 'translator': {

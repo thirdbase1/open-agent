@@ -5,7 +5,7 @@ import { toolError } from './error';
 import { createTool } from './utils';
 
 // Document Summarizer — summarize long documents, articles, transcripts.
-// Supports executive, bullet points, detailed, ELI5, and key takeaways styles.
+// Works with ANY capable text model from the gateway.
 
 export const createDocSummarizerTool = () =>
   createTool(
@@ -15,7 +15,7 @@ export const createDocSummarizerTool = () =>
         'Summarize long documents, articles, or text content. ' +
         'Provides executive summary, key points, and action items. ' +
         'Supports text up to ~100K characters. ' +
-        'Use this for research papers, meeting transcripts, reports, etc.',
+        'Pass any capable model ID. Defaults to a fast gateway model.',
       inputSchema: z.object({
         content: z.string().min(100).describe('The document text to summarize'),
         style: z
@@ -32,11 +32,18 @@ export const createDocSummarizerTool = () =>
           .number()
           .optional()
           .describe('Maximum summary length in words (default: 300)'),
+        model: z
+          .string()
+          .optional()
+          .describe(
+            'Any capable model ID from the gateway. If omitted, uses default.'
+          ),
       }),
-      execute: async ({ content, style, max_length }) => {
+      execute: async ({ content, style, max_length, model }) => {
         try {
           const summaryStyle = style || 'executive';
           const targetLength = max_length || 300;
+          const modelId = model || 'google/gemini-2.5-flash';
 
           const stylePrompts: Record<string, string> = {
             executive: 'Write a concise executive summary in 1-2 paragraphs.',
@@ -58,7 +65,7 @@ Document to summarize:
 ${content.slice(0, 80000)}`;
 
           const { text: summary } = await generateText({
-            model: 'google/gemini-2.5-flash',
+            model: modelId,
             system: systemPrompt,
             prompt: `Summarize this document in "${summaryStyle}" style, max ${targetLength} words.`,
             temperature: 0.3,
@@ -72,6 +79,7 @@ ${content.slice(0, 80000)}`;
             summary_length: summary.trim().split(/\s+/).length,
             compression_ratio:
               ((1 - summary.length / content.length) * 100).toFixed(1) + '%',
+            model_used: modelId,
           };
         } catch (e: any) {
           return toolError(

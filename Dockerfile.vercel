@@ -11,10 +11,9 @@ ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH}
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Copy Node.js from the official image — no apt warnings, no debconf,
-# no "packages can be upgraded" noise.  This replaces the old
-# `curl -fsSL https://deb.nodesource.com/setup_22.x | sh -` approach.
-COPY --from=node:22-bookworm-slim /usr/local/bin/node /usr/local/bin/node
+# Copy Node.js + corepack + npm from the official image — no apt warnings,
+# no debconf, no "packages can be upgraded" noise.
+COPY --from=node:22-bookworm-slim /usr/local/bin/ /usr/local/bin/
 COPY --from=node:22-bookworm-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
 
 # Enable yarn via corepack (ships with Node.js)
