@@ -62,9 +62,6 @@ pnpm-lock.yaml
 
 # rust
 target/
-Cargo.lock
 
 # exclude heavy directories not needed for image build
-blocksuite/
-tools/
-scripts/
+# scripts/ excluded — not a yarn workspace
