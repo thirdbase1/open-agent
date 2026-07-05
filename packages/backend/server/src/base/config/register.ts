@@ -212,7 +212,13 @@ export function defineModuleConfig<T extends keyof AppConfigSchema>(
   };
 }
 
-const CONFIG_JSON_PATHS = [join(env.projectRoot, 'config.json')];
+let CONFIG_JSON_PATHS: string[] = [];
+function getConfigJsonPaths(): string[] {
+  if (CONFIG_JSON_PATHS.length === 0 && typeof globalThis.env !== 'undefined') {
+    CONFIG_JSON_PATHS = [join(env.projectRoot, 'config.json')];
+  }
+  return CONFIG_JSON_PATHS;
+}
 function readConfigJSONOverrides(path: string) {
   const overrides: DeepPartial<AppConfig> = {};
   if (existsSync(path)) {
@@ -275,6 +281,10 @@ export function override(config: AppConfig, update: DeepPartial<AppConfig>) {
 }
 
 export function getDefaultConfig(): AppConfig {
+  console.log(
+    '[getDefaultConfig] Descriptors:',
+    Object.keys(APP_CONFIG_DESCRIPTORS)
+  );
   const config = {} as AppConfig;
   const envs = process.env;
 
@@ -313,7 +323,7 @@ Error: ${issue.message}`;
     config[module] = modulizedConfig;
   }
 
-  CONFIG_JSON_PATHS.forEach(path => {
+  getConfigJsonPaths().forEach(path => {
     const overrides = readConfigJSONOverrides(path);
     override(config, overrides);
   });

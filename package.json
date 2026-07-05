@@ -168,6 +168,8 @@
     "yjs": "patch:yjs@npm%3A13.6.21#~/.yarn/patches/yjs-npm-13.6.21-c9f1f3397c.patch"
   },
   "dependencies": {
+    "@vercel/sandbox": "^2.4.0",
+    "ai": "^7.0.0",
     "events": "^3.3.0",
     "idb": "^8.0.3"
   }

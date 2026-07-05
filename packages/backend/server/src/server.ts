@@ -72,9 +72,12 @@ export async function run() {
   const url = app.get(URLHelper);
   const listeningHost = '0.0.0.0';
 
-  await app.listen(config.server.port, listeningHost);
+  // Vercel assigns PORT dynamically — override config if set
+  const vercelPort = parseInt(process.env.PORT || '', 10);
+  const listenPort = vercelPort || config.server.port;
+  await app.listen(listenPort, listeningHost);
 
   logger.log(`Open-Agent Server is running in [${env.DEPLOYMENT_TYPE}] mode`);
-  logger.log(`Listening on http://${listeningHost}:${config.server.port}`);
+  logger.log(`Listening on http://${listeningHost}:${listenPort}`);
   logger.log(`And the public server should be recognized as ${url.baseUrl}`);
 }
