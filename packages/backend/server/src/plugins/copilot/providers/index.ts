@@ -1,35 +1,28 @@
-import {
-  AnthropicOfficialProvider,
-  AnthropicVertexProvider,
-} from './anthropic';
 import { FalProvider } from './fal';
-import { GeminiGenerativeProvider, GeminiVertexProvider } from './gemini';
+import { GatewayProvider } from './gateway';
 import { MorphProvider } from './morph';
-import { OpenAIProvider } from './openai';
 import { OracleProvider } from './oracle';
-import { PerplexityProvider } from './perplexity';
 
+/**
+ * Phase 3 (Vercel-native migration): GatewayProvider now handles OpenAI, Anthropic, Gemini,
+ * Perplexity, and xAI routing through Vercel AI Gateway - replacing the old
+ * OpenAIProvider / AnthropicOfficialProvider / AnthropicVertexProvider / GeminiGenerativeProvider
+ * / GeminiVertexProvider / PerplexityProvider entries that used to be registered here.
+ *
+ * FalProvider, MorphProvider, and OracleProvider remain unchanged and still registered
+ * separately - see gateway.ts's file header for why those three are not Gateway-routable.
+ */
 export const CopilotProviders = [
-  OpenAIProvider,
+  GatewayProvider,
   FalProvider,
-  GeminiGenerativeProvider,
-  GeminiVertexProvider,
-  PerplexityProvider,
-  AnthropicOfficialProvider,
-  AnthropicVertexProvider,
   MorphProvider,
   OracleProvider,
 ];
 
-export {
-  AnthropicOfficialProvider,
-  AnthropicVertexProvider,
-} from './anthropic';
-export { CopilotProviderFactory } from './factory';
 export { FalProvider } from './fal';
-export { GeminiGenerativeProvider, GeminiVertexProvider } from './gemini';
-export { OpenAIProvider } from './openai';
+export { CopilotProviderFactory } from './factory';
+export { GatewayProvider } from './gateway';
+export { MorphProvider } from './morph';
 export { OracleProvider } from './oracle';
-export { PerplexityProvider } from './perplexity';
 export type { CopilotProvider } from './provider';
 export * from './types';
