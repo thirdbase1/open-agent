@@ -13,11 +13,14 @@ import {
 } from '../../plugins/copilot/providers';
 import {
   DEFAULT_DIMENSIONS,
-  OpenAIProvider,
-} from '../../plugins/copilot/providers/openai';
+  GatewayProvider,
+} from '../../plugins/copilot/providers/gateway';
 import { sleep } from '../utils/utils';
 
-export class MockCopilotProvider extends OpenAIProvider {
+// Phase 3 (Vercel-native migration): mock now extends GatewayProvider instead of the removed
+// OpenAIProvider. Every method below is already overridden with test fixtures, so behavior is
+// unchanged - only the base class (for `configured()`/`type`/DI token identity) is swapped.
+export class MockCopilotProvider extends GatewayProvider {
   override readonly models = [
     {
       id: 'test',
