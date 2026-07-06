@@ -15,6 +15,12 @@ export enum CopilotProviderType {
   Perplexity = 'perplexity',
   Morph = 'morph',
   Oracle = 'oracle',
+  /**
+   * Vercel AI Gateway - added as part of the Vercel-native migration (Phase 3).
+   * Consolidates OpenAI/Anthropic/Gemini/Perplexity/xAI routing behind one provider.
+   * See providers/gateway.ts for the full rationale and what is/isn't folded in.
+   */
+  Gateway = 'gateway',
 }
 
 export const CopilotProviderSchema = z.object({
