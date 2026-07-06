@@ -1,0 +1,9 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/*
+ * Ported from packages/frontend/app/src/index.css. The original used vanilla-extract for
+ * component-scoped styles (*.css.ts files) plus a global Tailwind entry. Tailwind v4 is kept
+ * as-is (same version already in use); vanilla-extract *.css.ts files are migrated per-component
+ * as each component is ported (see MIGRATION_STATUS.md).
+ */
