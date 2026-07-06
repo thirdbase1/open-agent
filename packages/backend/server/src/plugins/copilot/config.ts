@@ -4,17 +4,11 @@ import {
   StorageProviderConfig,
 } from '../../base';
 import { CopilotPromptScenario } from './prompt/prompts';
-import {
-  AnthropicOfficialConfig,
-  AnthropicVertexConfig,
-} from './providers/anthropic';
 import type { FalConfig } from './providers/fal';
-import { GeminiGenerativeConfig, GeminiVertexConfig } from './providers/gemini';
+import type { GatewayConfig } from './providers/gateway';
 import { MorphConfig } from './providers/morph';
-import { OpenAIConfig } from './providers/openai';
 import { OracleConfig } from './providers/oracle';
-import { PerplexityConfig } from './providers/perplexity';
-import { OracleSchema, VertexSchema } from './providers/types';
+import { OracleSchema } from './providers/types';
 declare global {
   interface AppConfigSchema {
     copilot: {
@@ -40,13 +34,10 @@ declare global {
       storage: ConfigItem<StorageProviderConfig>;
       scenarios: ConfigItem<CopilotPromptScenario>;
       providers: {
-        openai: ConfigItem<OpenAIConfig>;
+        // Phase 3 (Vercel-native migration): single Gateway config replaces
+        // openai/gemini/geminiVertex/perplexity/anthropic/anthropicVertex.
+        gateway: ConfigItem<GatewayConfig>;
         fal: ConfigItem<FalConfig>;
-        gemini: ConfigItem<GeminiGenerativeConfig>;
-        geminiVertex: ConfigItem<GeminiVertexConfig>;
-        perplexity: ConfigItem<PerplexityConfig>;
-        anthropic: ConfigItem<AnthropicOfficialConfig>;
-        anthropicVertex: ConfigItem<AnthropicVertexConfig>;
         morph: ConfigItem<MorphConfig>;
         oracle: ConfigItem<OracleConfig>;
       };
@@ -77,49 +68,22 @@ defineModuleConfig('copilot', {
       },
     },
   },
-  'providers.openai': {
-    desc: 'The config for the openai provider.',
+  'providers.gateway': {
+    desc: 'The config for Vercel AI Gateway (replaces the previous separate openai/gemini/geminiVertex/perplexity/anthropic/anthropicVertex provider configs). Set AI_GATEWAY_API_KEY.',
     default: {
       apiKey: '',
-      baseURL: 'https://api.openai.com/v1',
+      // Default prefix per ai-sdk.dev/providers/ai-sdk-providers/ai-gateway (verified, not
+      // assumed): "https://ai-gateway.vercel.sh/v4/ai". Left here explicitly so it's easy to
+      // override for self-hosted/BYOK setups without touching code.
+      baseURL: 'https://ai-gateway.vercel.sh/v4/ai',
     },
-    link: 'https://github.com/openai/openai-node',
+    link: 'https://vercel.com/docs/ai-gateway',
   },
   'providers.fal': {
     desc: 'The config for the fal provider.',
     default: {
       apiKey: '',
     },
-  },
-  'providers.gemini': {
-    desc: 'The config for the gemini provider.',
-    default: {
-      apiKey: '',
-      baseURL: 'https://generativelanguage.googleapis.com/v1beta',
-    },
-  },
-  'providers.geminiVertex': {
-    desc: 'The config for the gemini provider in Google Vertex AI.',
-    default: {},
-    schema: VertexSchema,
-  },
-  'providers.perplexity': {
-    desc: 'The config for the perplexity provider.',
-    default: {
-      apiKey: '',
-    },
-  },
-  'providers.anthropic': {
-    desc: 'The config for the anthropic provider.',
-    default: {
-      apiKey: '',
-      baseURL: 'https://api.anthropic.com/v1',
-    },
-  },
-  'providers.anthropicVertex': {
-    desc: 'The config for the anthropic provider in Google Vertex AI.',
-    default: {},
-    schema: VertexSchema,
   },
   'providers.morph': {
     desc: 'The config for the morph provider.',
